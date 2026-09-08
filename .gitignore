@@ -1,0 +1,21 @@
+# Environments & Dependencies
+node_modules/
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# Builds
+dist/
+build/
+bin/
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Local logs
+*.log
+.agents/blackboard/events.jsonl
