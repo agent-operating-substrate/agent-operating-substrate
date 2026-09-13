@@ -1,4 +1,4 @@
-id: py-no-wildcard-import-002
+id: py-no-bare-except-002
 version: 1
 status: active
 scope:
@@ -7,10 +7,10 @@ scope:
   languages:
   - python
 invariant:
-  statement: Wildcard imports ('from module import *') are prohibited; all imported
-    symbols must be explicitly named or imported via the module namespace.
-  rationale: Wildcard imports pollute module namespaces, mask circular dependencies,
-    hide symbol origins, and break static analysis.
+  statement: Catching Exception or bare except blocks must not silently suppress errors
+    with pass; catch specific exception classes and log or re-raise errors.
+  rationale: Silent exception swallowing hides fatal runtime errors, interrupts, and
+    bugs, making forensic debugging and root-cause analysis impossible.
   enforcement: reject_diff
   max_blast_radius_lines: 30
 provenance:

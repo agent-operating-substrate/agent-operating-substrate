@@ -3,22 +3,23 @@ version: 1
 status: active
 scope:
   paths:
-  - src/**/*.ts
-  - src/**/*.tsx
+  - '**/*.ts'
+  - '**/*.tsx'
   languages:
   - typescript
 invariant:
   statement: TypeScript variables, parameters, and return types must avoid explicit
-    any and use unknown or generic constraints.
-  rationale: Any types disable compiler type checking and allow runtime type errors
-    to propagate silently.
+    'any'; use 'unknown', union types, generic constraints, or explicit interfaces
+    instead.
+  rationale: The 'any' type disables compiler type checking, concealing potential
+    runtime type errors and eliminating editor refactoring safety.
   enforcement: reject_diff
   max_blast_radius_lines: 30
 provenance:
-  incident_id: pack-web-typescript
+  incident_id: pack-typescript-core
   git_commit: HEAD
   inscribing_agent: pack-installer
-  created_at: '2026-09-13T06:58:07Z'
-  last_verified_at: '2026-09-13T06:58:07Z'
+  created_at: '2026-09-13T07:18:25Z'
+  last_verified_at: '2026-09-13T07:18:25Z'
   trigger_count: 1
   peer_consensus_agent: pack-curator
