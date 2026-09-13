@@ -343,3 +343,66 @@ def install_pack(
             installed_paths.append(saved)
 
     return installed_paths
+
+
+def uninstall_pack(
+    pack_name: str,
+    root_dir: Path | str = ".",
+    archive: bool = True,
+) -> list[Path]:
+    """Uninstall rules belonging to a curated pack by archiving or removing them."""
+    if pack_name not in CURATED_PACKS:
+        raise ValueError(f"Unknown pack '{pack_name}'. Available: {list(CURATED_PACKS.keys())}")
+
+    root = Path(root_dir)
+    sub_dir = root / ".agents" / "substrate"
+    active_dir = sub_dir / "active"
+    archive_dir = sub_dir / "archive"
+    if archive:
+        archive_dir.mkdir(parents=True, exist_ok=True)
+
+    rule_ids = {item["id"] for item in CURATED_PACKS[pack_name]}
+    uninstalled: list[Path] = []
+
+    for search_dir in (active_dir, sub_dir / "candidate"):
+        if not search_dir.is_dir():
+            continue
+        for f in list(search_dir.glob("*.yaml")) + list(search_dir.glob("*.yml")):
+            if f.stem in rule_ids:
+                if archive:
+                    dest = archive_dir / f.name
+                    try:
+                        data = yaml.safe_load(f.read_text(encoding="utf-8"))
+                        if isinstance(data, dict):
+                            data["status"] = "archive"
+                            dest.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+                            f.unlink()
+                        else:
+                            f.rename(dest)
+                    except Exception:
+                        f.rename(dest)
+                    uninstalled.append(dest)
+                else:
+                    f.unlink()
+                    uninstalled.append(f)
+
+    return uninstalled
+
+
+def recommend_packs(root_dir: Path | str = ".") -> list[str]:
+    """Recommend curated rule packs based on automated repository tech stack analysis."""
+    root = Path(root_dir)
+    recommended: list[str] = ["security-core", "general-hygiene"]
+    has_py = (root / "pyproject.toml").is_file() or (root / "requirements.txt").is_file() or any(root.glob("*.py"))
+    if has_py:
+        recommended.append("python-core")
+    has_ts = (root / "package.json").is_file() or (root / "tsconfig.json").is_file()
+    if has_ts:
+        recommended.append("typescript-core")
+    has_rust = (root / "Cargo.toml").is_file()
+    if has_rust:
+        recommended.append("rust-core")
+    has_go = (root / "go.mod").is_file()
+    if has_go:
+        recommended.append("go-core")
+    return [p for p in recommended if p in CURATED_PACKS]

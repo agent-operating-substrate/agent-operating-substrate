@@ -25,7 +25,7 @@ from aos.harness import sync_harnesses
 from aos.hook import install_git_hook, run_pre_commit_check, uninstall_git_hook
 from aos.mcp import run_mcp_server
 from aos.mesh import simulate_mesh_cycle
-from aos.packs import install_pack, list_available_packs
+from aos.packs import install_pack, list_available_packs, recommend_packs, uninstall_pack
 from aos.ui import start_ui_server
 
 DEFAULT_CONFIG_YAML = """version: 1
@@ -64,10 +64,10 @@ def cmd_init(args: argparse.Namespace) -> int:
         print(f"Created event stream: {event_log}")
 
     if not getattr(args, "bare", False):
-        default_packs = ["general-hygiene", "security-core"]
-        for p in default_packs:
+        recommended = recommend_packs(root_dir=root)
+        for p in recommended:
             install_pack(p, root_dir=root, promote=True)
-        print("Installed universal default rule packs: general-hygiene, security-core")
+        print(f"Installed recommended rule packs: {', '.join(recommended)}")
 
     print("Substrate initialized under .agents/")
     return 0
@@ -337,6 +337,24 @@ def cmd_pack_install(args: argparse.Namespace) -> int:
         return 1
 
 
+def cmd_pack_uninstall(args: argparse.Namespace) -> int:
+    """Uninstall a curated invariant pack by archiving or removing its rules."""
+    try:
+        uninstalled = uninstall_pack(
+            args.pack_name,
+            root_dir=args.root,
+            archive=not args.delete,
+        )
+        action_str = "deleted" if args.delete else "archived"
+        print(f"Uninstalled {len(uninstalled)} rule(s) ({action_str}):")
+        for p in uninstalled:
+            print(f"- {p}")
+        return 0
+    except ValueError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+
+
 def cmd_ui(args: argparse.Namespace) -> int:
     """Launch local web visualizer dashboard."""
     start_ui_server(port=args.port, root_dir=args.root)
@@ -576,6 +594,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_pack_inst.add_argument("pack_name", help="Name of the pack (security-owasp, python-clean-architecture).")
     p_pack_inst.add_argument("--candidate", action="store_true", help="Install as candidate rather than active.")
     p_pack_inst.set_defaults(func=cmd_pack_install)
+
+    p_pack_uninst = pack_sub.add_parser("uninstall", help="Uninstall a curated invariant pack.")
+    p_pack_uninst.add_argument("pack_name", help="Name of the pack to uninstall.")
+    p_pack_uninst.add_argument("--delete", action="store_true", help="Permanently delete rules instead of archiving.")
+    p_pack_uninst.set_defaults(func=cmd_pack_uninstall)
 
     # aos ui
     p_ui = subparsers.add_parser("ui", help="Start local web visualizer dashboard.")
