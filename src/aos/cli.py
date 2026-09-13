@@ -8,7 +8,7 @@ from pathlib import Path
 
 from aos.autopsy import inscribe_candidate, promote_candidate, synthesize_candidate_rule
 from aos.blackboard import post_event, read_events
-from aos.ci import run_ci_check
+from aos.ci import review_pr_diff, run_ci_check
 from aos.curator import curate_substrate
 from aos.daemon import SubstrateDaemon
 from aos.engine import RuleEngine
@@ -245,6 +245,19 @@ def cmd_ci_run(args: argparse.Namespace) -> int:
     )
     print(report.to_markdown())
     return 0 if report.status == "passed" else 1
+
+
+def cmd_ci_review(args: argparse.Namespace) -> int:
+    """Analyze a pull request diff and generate inline review comments."""
+    if getattr(args, "diff", None):
+        diff_text = Path(args.diff).read_text(encoding="utf-8")
+    else:
+        diff_text = sys.stdin.read()
+    result = review_pr_diff(diff_text, root_dir=args.root)
+    print(f"PR Review Status: {result['status'].upper()} ({result['comments_count']} comment(s))")
+    for c in result["comments"]:
+        print(f"- {c['file_path']}:{c['line_number']} [{c['rule_id']}]: {c['message']}")
+    return 0 if result["status"] == "approved" else 1
 
 
 def cmd_fleet_list(args: argparse.Namespace) -> int:
@@ -548,6 +561,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_ci_run.add_argument("--auto-sync", action="store_true", help="Sync harness files before check.")
     p_ci_run.add_argument("--files", nargs="*", default=None, help="Specific files to evaluate.")
     p_ci_run.set_defaults(func=cmd_ci_run)
+
+    p_ci_rev = ci_sub.add_parser("review", help="Review pull request diff and generate inline comments.")
+    p_ci_rev.add_argument("--diff", help="Path to unified diff file (reads from stdin if omitted).")
+    p_ci_rev.set_defaults(func=cmd_ci_review)
 
     # aos fleet
     p_fleet = subparsers.add_parser("fleet", help="Enterprise cross-repository fleet invariant mesh.")

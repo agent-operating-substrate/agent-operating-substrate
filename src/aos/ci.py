@@ -98,3 +98,50 @@ def run_ci_check(
             pass
 
     return report
+
+
+def review_pr_diff(diff_content: str, root_dir: Path | str = ".") -> dict[str, Any]:
+    """Analyze unified git diff, evaluate against active invariants, and format PR review comments."""
+    from aos.engine import RuleEngine
+    from aos.enforcer import check_content_violations
+    from aos.harness import get_rule_guidance
+
+    root = Path(root_dir)
+    engine = RuleEngine(root_dir=root)
+    comments: list[dict[str, Any]] = []
+    current_file: Optional[str] = None
+    file_lines: list[str] = []
+
+    def evaluate_file(file_path: str, lines: list[str]) -> None:
+        content = "\n".join(lines)
+        matched = engine.match_file(file_path, status="active")
+        violations = check_content_violations(file_path, content, matched)
+        for v in violations:
+            rule_obj = next((r for r in matched if r.id == v.rule_id), None)
+            compliant = get_rule_guidance(rule_obj)[0] if rule_obj else None
+            sugg = f"\n\n**Compliant Pattern**: `{compliant}`" if compliant else ""
+            comments.append({
+                "file_path": v.file_path,
+                "line_number": v.line_number or 1,
+                "rule_id": v.rule_id,
+                "message": v.message,
+                "comment_body": f"### Invariant Barrier [{v.rule_id}]\n\n{v.message}{sugg}",
+            })
+
+    for line in diff_content.splitlines():
+        if line.startswith("+++ b/"):
+            if current_file and file_lines:
+                evaluate_file(current_file, file_lines)
+            current_file = line[6:].strip()
+            file_lines = []
+        elif current_file and line.startswith("+") and not line.startswith("+++"):
+            file_lines.append(line[1:])
+
+    if current_file and file_lines:
+        evaluate_file(current_file, file_lines)
+
+    return {
+        "status": "changes_requested" if comments else "approved",
+        "comments_count": len(comments),
+        "comments": comments,
+    }

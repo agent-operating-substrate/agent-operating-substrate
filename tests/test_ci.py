@@ -44,3 +44,24 @@ def test_ci_check_with_files(tmp_path: Path):
     report_bad = run_ci_check(files=["bad.py"], root_dir=tmp_path)
     assert report_bad.status == "failed"
     assert len(report_bad.violations) == 1
+
+
+def test_review_pr_diff(tmp_path: Path):
+    from aos.ci import review_pr_diff
+    from aos.packs import install_pack
+
+    install_pack("python-core", root_dir=tmp_path, promote=True)
+
+    diff = """diff --git a/src/app.py b/src/app.py
+--- a/src/app.py
++++ b/src/app.py
+@@ -1,3 +1,4 @@
++from os import *
++def compute():
++    print("logging output")
+"""
+    result = review_pr_diff(diff, root_dir=tmp_path)
+    assert result["status"] == "changes_requested"
+    assert result["comments_count"] >= 1
+    assert any("py-no-wildcard-import-002" in c["rule_id"] for c in result["comments"])
+    assert any("Compliant Pattern" in c["comment_body"] for c in result["comments"])
