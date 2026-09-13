@@ -63,6 +63,12 @@ def cmd_init(args: argparse.Namespace) -> int:
         event_log.touch()
         print(f"Created event stream: {event_log}")
 
+    if not getattr(args, "bare", False):
+        default_packs = ["general-hygiene", "security-core"]
+        for p in default_packs:
+            install_pack(p, root_dir=root, promote=True)
+        print("Installed universal default rule packs: general-hygiene, security-core")
+
     print("Substrate initialized under .agents/")
     return 0
 
@@ -407,6 +413,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     # aos init
     p_init = subparsers.add_parser("init", help="Initialize .agents/ substrate in target repository.")
+    p_init.add_argument("--bare", action="store_true", help="Initialize empty substrate without installing default packs.")
     p_init.set_defaults(func=cmd_init)
 
     # aos rules
