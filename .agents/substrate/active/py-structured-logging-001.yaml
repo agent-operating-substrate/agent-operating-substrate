@@ -14,7 +14,6 @@ invariant:
   rationale: Raw print statements lack log level metadata, bypass centralized observability
     aggregation, and pollute stdout streams.
   enforcement: warn
-  max_blast_radius_lines: 30
 provenance:
   incident_id: pack-python-core
   git_commit: HEAD

@@ -33,6 +33,8 @@ All `aos` commands accept the following global option:
 * [`aos fleet`](#aos-fleet): Publish and sync rules with the enterprise fleet ledger.
 * [`aos blackboard`](#aos-blackboard): Inspect events on the local peer blackboard.
 * [`aos ui`](#aos-ui): Start the local Control Plane web dashboard.
+* [`aos ingest`](#aos-ingest): Scan repository conventions and synthesize tailored guardrails.
+* [`aos identity`](#aos-identity): Manage autonomous agent identities and supervisory mailboxes.
 
 ***
 
@@ -160,8 +162,18 @@ aos sync [--harnesses <comma-separated-list>]
 ### Supported Harnesses
 * `cursor`: Writes to `.cursorrules` at repository root.
 * `cursor_mdc`: Writes to `.cursor/rules/aos-invariants.mdc`.
+* `gemini`: Writes to `.gemini/instructions.md`.
+* `gemini_root`: Writes to `GEMINI.md`.
+* `codex`: Writes to `.openai/instructions.md`.
+* `codex_root`: Writes to `CODEX.md`.
+* `claude`: Writes to `CLAUDE.md`.
 * `windsurf`: Writes to `.windsurfrules` at repository root.
 * `copilot`: Writes to `.github/copilot-instructions.md`.
+* `aider`: Writes to `CONVENTIONS.md`.
+* `cline`: Writes to `.clinerules`.
+* `roo`: Writes to `.roomodes`.
+* `amazonq`: Writes to `.amazonq/rules.md`.
+* `agents`: Writes to universal `AGENTS.md` standard.
 
 ### Example
 ```bash
@@ -549,12 +561,13 @@ Starts a local HTTP server providing:
 Scan repository manifests, linters, and existing team instruction files to derive and synthesize tailored invariants.
 
 ```bash
-aos ingest [--dry-run] [--promote] [--root <path>]
+aos ingest [--dry-run] [--promote] [--install-packs] [--root <path>]
 ```
 
 ### Options
 * `--dry-run`: Inspect and display proposed guardrails without modifying substrate files.
 * `--promote`: Inscribe and immediately promote synthesized guardrails to active status (default: candidate status).
+* `--install-packs`: Automatically install stack-recommended rule packs detected during scan.
 * `--root <path>`: Repository root directory to inspect (default: `.`).
 
 ### Example
@@ -562,9 +575,37 @@ aos ingest [--dry-run] [--promote] [--root <path>]
 # Preview what AOS detects in the repository
 aos ingest --dry-run
 
-# Inscribe and immediately activate tailored rules
-aos ingest --promote
+# Inscribe, activate tailored rules, and install recommended packs
+aos ingest --promote --install-packs
 ```
 
 ### Exit Codes
 * `0`: Scan and ingestion completed successfully.
+
+***
+
+## aos identity
+
+Manage autonomous agent identities and supervisory mailboxes.
+
+### Subcommands
+* `aos identity list`: List registered autonomous agent identities and credentials.
+* `aos identity create [--persona <name>] [--password <pwd>]`: Provision a programmatic mailbox for an agent persona.
+* `aos identity inbox <persona>`: Inspect incoming messages for an agent persona.
+
+### Example
+```bash
+# List existing agent identities
+aos identity list
+
+# Create a supervisory mailbox for the maintainer persona
+aos identity create --persona maintainer
+
+# Check incoming communications for maintainer
+aos identity inbox maintainer
+```
+
+### Exit Codes
+* `0`: Identity command completed successfully.
+* `1`: Network or vault error occurred.
+

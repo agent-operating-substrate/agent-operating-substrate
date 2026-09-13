@@ -11,267 +11,281 @@ Modern autonomous coding agents require two distinct layers of control:
 1. **Soft Guidance (Prompt Projection & MCP):** Educates the LLM while it drafts code by injecting active invariants directly into tool system instructions and offering live query tools via the Model Context Protocol.
 2. **Hard Deterministic Enforcement (Git Pre-Commit):** A local binary gatekeeper that halts invalid commits at the Git level. Even if an LLM hallucinates, suffers from attention drift, or ignores prompt instructions, non-compliant code can never enter your repository history.
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                   LAYER 1: SOFT GUIDANCE (PROMPT & MCP)                │
-│                                                                        │
-│   Cursor IDE        Windsurf IDE      GitHub Copilot     Claude Code   │
-│  (.cursorrules)   (.windsurfrules)   (copilot-instr.)    (CLAUDE.md)   │
-│         ▲                 ▲                 ▲                 ▲        │
-│         └─────────────────┴────────┬────────┴─────────────────┘        │
-│                                    │                                   │
-│                        aos sync: Prompt Injection                      │
-│                                    │                                   │
-│                     ┌──────────────┴──────────────┐                    │
-│                     │  .agents/substrate/active/  │                    │
-│                     │   (Machine Invariant YAML)  │                    │
-│                     └──────────────┬──────────────┘                    │
-│                                    │                                   │
-│                     aos mcp: Stdio Protocol Server                     │
-│                                    │                                   │
-│                         Interactive Agent Tools                        │
-│                 (aos_rules_check, aos_blackboard_post)                 │
-└────────────────────────────────────┬───────────────────────────────────┘
-                                     │ (Agent generates patch)
-                                     ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│              LAYER 2: HARD DETERMINISTIC ENFORCEMENT (GIT HOOK)         │
-│                                                                        │
-│         Developer / Agent runs: git commit -m "feat: add user"         │
-│                                    │                                   │
-│                                    ▼                                   │
-│                    .git/hooks/pre-commit (aos hook run)                │
-│                                    │                                   │
-│            ┌───────────────────────┴───────────────────────┐           │
-│            ▼                                               ▼           │
-│     [PASS: Exit Code 0]                            [FAIL: Exit Code 1] │
-│   Commit written to history                      Commit blocked        │
-│                                                  Actionable error log  │
-│                                                  Agent self-corrects   │
-└────────────────────────────────────────────────────────────────────────┘
+The architecture below maps the interaction between soft guidance and hard enforcement:
+
+```mermaid
+flowchart TD
+    subgraph Layer1["Layer 1: Soft Guidance (Prompt Injection & MCP)"]
+        Substrate[("Active Substrate Invariants<br/>.agents/substrate/active/*.yaml")]
+        Substrate -->|"aos sync"| Tools["Cursor, Windsurf, Copilot, Claude Code, Gemini, Codex"]
+        Substrate -->|"aos mcp (stdio)"| MCPTools["Interactive MCP Tools<br/>(aos_rules_check, aos_blackboard_post)"]
+        Tools --> AgentDraft["Agent Drafts Proposed Patch"]
+        MCPTools --> AgentDraft
+    end
+
+    subgraph Layer2["Layer 2: Hard Deterministic Enforcement (Git Hook)"]
+        AgentDraft -->|"git commit"| Hook{"Pre-Commit Barrier<br/>(aos hook run)"}
+        Hook -->|"Complies"| Pass["Commit Accepted (Exit 0)<br/>Written to Git History"]
+        Hook -->|"Violates"| Fail["Commit Blocked (Exit 1)<br/>Actionable Diagnostics & Remediation"]
+        Fail -.->|"Inoculates Memory & Re-prompts"| AgentDraft
+    end
 ```
 
 ***
+
+!!! warning "Soft Guidance vs. Hard Enforcement"
+    Prompt injection alone is never sufficient to protect a codebase. LLMs can hallucinate, suffer from context exhaustion, or skip instructions. AOS soft guidance guides agents while they write code, while the hard Git pre-commit barrier ensures non-compliant diffs can never be committed regardless of model behavior.
 
 ## Step-by-Step Setup Guides
 
-AOS integrates with all leading AI development tools without requiring proprietary plugins or external cloud services.
+AOS integrates with all leading AI development tools without requiring proprietary plugins or external cloud services. Select your environment below for copy-paste instructions:
 
-### 1. Cursor IDE Integration
+=== "Cursor IDE"
+    Cursor supports project instructions through `.cursorrules` and modular rule files under `.cursor/rules/*.mdc`. AOS manages both targets automatically.
 
-Cursor supports project instructions through `.cursorrules` and modular rule files under `.cursor/rules/*.mdc`. AOS manages both targets automatically.
+    #### Setting Up `.cursorrules`
+    When you run `aos sync`, AOS creates or updates `.cursorrules` in your repository root:
 
-#### Setting Up `.cursorrules`
-When you run `aos sync`, AOS creates or updates `.cursorrules` in your repository root:
+    ```bash
+    aos sync --harnesses cursor
+    ```
 
-```bash
-aos sync --harnesses cursor
-```
+    The resulting `.cursorrules` file bounds active rules within deterministic HTML comment markers:
 
-The resulting `.cursorrules` file bounds active rules within deterministic HTML comment markers:
+    ```markdown
+    # Project Conventions
+    Write clean, modular code following PEP 8 conventions.
 
-```markdown
-# Project Conventions
-Write clean, modular code following PEP 8 conventions.
+    <!-- AOS_INVARIANTS_START -->
+    ## Active Substrate Invariants (Machine-Enforced)
+    The following invariants are actively enforced by the Agent Operating Substrate.
+    You must strictly obey these constraints in every proposed patch:
 
-<!-- AOS_INVARIANTS_START -->
-## Active Substrate Invariants (Machine-Enforced)
-The following invariants are actively enforced by the Agent Operating Substrate.
-You must strictly obey these constraints in every proposed patch:
+    ### [sec-sql-injection-001] (Enforcement: reject_diff)
+    * Statement: SQL queries must use parameterized bind variables, never raw string interpolation or concatenation.
+    * Rationale: Direct string interpolation in SQL strings creates critical SQL injection vulnerabilities.
+    * Paths: **/*
+    * Languages: python, javascript, typescript, go, java
 
-### [sec-sql-injection-001] (Enforcement: reject_diff)
-* Statement: SQL queries must use parameterized bind variables, never raw string interpolation or concatenation.
-* Rationale: Direct string interpolation in SQL strings creates critical SQL injection vulnerabilities.
-* Paths: **/*
-* Languages: python, javascript, typescript, go, java
+    ### [aos-diff-002] (Enforcement: reject_diff)
+    * Statement: Changes must remain strictly surgical. Contiguous diff blocks exceeding 30 lines require technical justification.
+    * Rationale: Prevents unexpected refactoring and unintended behavioral changes.
+    <!-- AOS_INVARIANTS_END -->
 
-### [aos-diff-002] (Enforcement: reject_diff)
-* Statement: Changes must remain strictly surgical. Contiguous diff blocks exceeding 30 lines require technical justification.
-* Rationale: Prevents unexpected refactoring and unintended behavioral changes.
-<!-- AOS_INVARIANTS_END -->
+    # Additional Team Notes
+    Always run tests before opening pull requests.
+    ```
 
-# Additional Team Notes
-Always run tests before opening pull requests.
-```
+    #### Setting Up Modern Cursor Rules (`.cursor/rules/aos-invariants.mdc`)
+    Modern versions of Cursor support the `.mdc` format with frontmatter scoping:
 
-#### Setting Up Modern Cursor Rules (`.cursor/rules/aos-invariants.mdc`)
-Modern versions of Cursor support the `.mdc` format with frontmatter scoping:
+    ```bash
+    aos sync --harnesses cursor_mdc
+    ```
 
-```bash
-aos sync --harnesses cursor_mdc
-```
+    This compiles active rules into `.cursor/rules/aos-invariants.mdc`:
 
-This compiles active rules into `.cursor/rules/aos-invariants.mdc`:
+    ```markdown
+    ---
+    description: Machine-enforced repository invariants managed by AOS
+    globs: **/*
+    alwaysApply: true
+    ---
 
-```markdown
----
-description: Machine-enforced repository invariants managed by AOS
-globs: **/*
-alwaysApply: true
----
+    <!-- AOS_INVARIANTS_START -->
+    ## Active Substrate Invariants (Machine-Enforced)
+    ...
+    <!-- AOS_INVARIANTS_END -->
+    ```
 
-<!-- AOS_INVARIANTS_START -->
-## Active Substrate Invariants (Machine-Enforced)
-...
-<!-- AOS_INVARIANTS_END -->
-```
+    #### Configuring Cursor MCP Support
+    Equip Cursor Composer with live invariant verification tools:
 
-#### Configuring Cursor MCP Support
-Equip Cursor Composer with live invariant verification tools:
+    1. Open Cursor Settings -> **Features** -> **MCP**.
+    2. Click **+ Add New MCP Server**.
+    3. Set the following configuration:
+        * **Name:** `aos`
+        * **Type:** `command`
+        * **Command:** `aos mcp`
+    4. Cursor will automatically discover four tools: `aos_rules_check`, `aos_rules_list`, `aos_autopsy`, and `aos_blackboard_post`.
 
-1. Open Cursor Settings -> **Features** -> **MCP**.
-2. Click **+ Add New MCP Server**.
-3. Set the following configuration:
-   * **Name:** `aos`
-   * **Type:** `command`
-   * **Command:** `aos mcp`
-4. Cursor will automatically discover four tools: `aos_rules_check`, `aos_rules_list`, `aos_autopsy`, and `aos_blackboard_post`.
+=== "Claude Code"
+    Claude Code (the CLI research and coding tool by Anthropic) automatically reads repository instructions from `CLAUDE.md` in the current working directory.
 
-***
+    #### Syncing to `CLAUDE.md`
+    Run the synchronization command:
 
-### 2. Claude Code Integration
+    ```bash
+    aos sync --harnesses claude
+    ```
 
-Claude Code (the CLI research and coding tool by Anthropic) automatically reads repository instructions from `CLAUDE.md` in the current working directory.
+    AOS inspects your existing `CLAUDE.md`. If human-authored guidelines exist, AOS preserves them and injects the active invariants block:
 
-#### Syncing to `CLAUDE.md`
-Run the synchronization command:
+    ```markdown
+    # CLAUDE.md: Team Engineering Guidelines
 
-```bash
-aos sync --harnesses claude
-```
+    ## Development Workflow
+    - Build: pip install -e .
+    - Test: pytest tests/
 
-AOS inspects your existing `CLAUDE.md`. If human-authored guidelines exist, AOS preserves them and injects the active invariants block:
+    <!-- AOS_INVARIANTS_START -->
+    ## Active Substrate Invariants (Machine-Enforced)
+    The following invariants are actively enforced by the Agent Operating Substrate.
+    You must strictly obey these constraints in every proposed patch:
 
-```markdown
-# CLAUDE.md: Team Engineering Guidelines
+    ### [sec-secret-leak-002] (Enforcement: reject_diff)
+    * Statement: API keys, secrets, private certificates, and passwords must never be committed to source files.
+    * Rationale: Hardcoded credentials in Git histories result in credential compromise and audit failure.
+    <!-- AOS_INVARIANTS_END -->
+    ```
 
-## Development Workflow
-- Build: pip install -e .
-- Test: pytest tests/
+    Whenever Claude Code runs, it inherits your repository invariants without any additional flags.
 
-<!-- AOS_INVARIANTS_START -->
-## Active Substrate Invariants (Machine-Enforced)
-The following invariants are actively enforced by the Agent Operating Substrate.
-You must strictly obey these constraints in every proposed patch:
+=== "GitHub Copilot"
+    GitHub Copilot Chat uses `.github/copilot-instructions.md` to establish repository context for coding recommendations and chat interactions.
 
-### [sec-secret-leak-002] (Enforcement: reject_diff)
-* Statement: API keys, secrets, private certificates, and passwords must never be committed to source files.
-* Rationale: Hardcoded credentials in Git histories result in credential compromise and audit failure.
-<!-- AOS_INVARIANTS_END -->
-```
+    #### Syncing to Copilot
+    Execute:
 
-Whenever Claude Code runs, it inherits your repository invariants without any additional flags.
+    ```bash
+    aos sync --harnesses copilot
+    ```
 
-***
+    AOS creates `.github/copilot-instructions.md` (creating the `.github/` directory if necessary):
 
-### 3. GitHub Copilot Integration
+    ```markdown
+    <!-- AOS_INVARIANTS_START -->
+    ## Active Substrate Invariants (Machine-Enforced)
+    The following invariants are actively enforced by the Agent Operating Substrate.
+    You must strictly obey these constraints in every proposed patch:
 
-GitHub Copilot Chat uses `.github/copilot-instructions.md` to establish repository context for coding recommendations and chat interactions.
+    ### [py-no-wildcard-import-002] (Enforcement: reject_diff)
+    * Statement: Wildcard imports ('from module import *') are strictly prohibited.
+    * Rationale: Wildcard imports cause namespace pollution, mask circular dependencies, and degrade linter performance.
+    * Paths: src/**, tests/**
+    * Languages: python
+    <!-- AOS_INVARIANTS_END -->
+    ```
 
-#### Syncing to Copilot
-Execute:
+    Copilot Workspace, VS Code Copilot Chat, and JetBrains Copilot Chat automatically ingest this file on every request.
 
-```bash
-aos sync --harnesses copilot
-```
+=== "Windsurf & Cascade"
+    Windsurf utilizes `.windsurfrules` at the project root to control its Cascade autonomous coding agent.
 
-AOS creates `.github/copilot-instructions.md` (creating the `.github/` directory if necessary):
+    #### Syncing to `.windsurfrules`
+    Run:
 
-```markdown
-<!-- AOS_INVARIANTS_START -->
-## Active Substrate Invariants (Machine-Enforced)
-The following invariants are actively enforced by the Agent Operating Substrate.
-You must strictly obey these constraints in every proposed patch:
+    ```bash
+    aos sync --harnesses windsurf
+    ```
 
-### [py-no-wildcard-import-002] (Enforcement: reject_diff)
-* Statement: Wildcard imports ('from module import *') are strictly prohibited.
-* Rationale: Wildcard imports cause namespace pollution, mask circular dependencies, and degrade linter performance.
-* Paths: src/**, tests/**
-* Languages: python
-<!-- AOS_INVARIANTS_END -->
-```
+    AOS injects active invariants into `.windsurfrules`:
 
-Copilot Workspace, VS Code Copilot Chat, and JetBrains Copilot Chat automatically ingest this file on every request.
+    ```markdown
+    <!-- AOS_INVARIANTS_START -->
+    ## Active Substrate Invariants (Machine-Enforced)
+    The following invariants are actively enforced by the Agent Operating Substrate.
+    You must strictly obey these constraints in every proposed patch:
 
-***
+    ### [perf-avx-align-001] (Enforcement: reject_diff)
+    * Statement: PointBuffer structures passed to AVX2/AVX-512 kernels must be aligned to 32-byte boundaries.
+    * Rationale: Unaligned memory loads trigger general protection faults under high-throughput vector execution.
+    * Paths: src/geometry/simd/**, include/geometry/simd/**
+    * Languages: cpp, cuda
+    <!-- AOS_INVARIANTS_END -->
+    ```
 
-### 4. Windsurf IDE Integration
+=== "Google Gemini & Antigravity"
+    Google Gemini (Gemini Code Assist, Gemini CLI, Antigravity) reads repo guidelines from `GEMINI.md` and `.gemini/instructions.md`.
 
-Windsurf utilizes `.windsurfrules` at the project root to control its Cascade autonomous coding agent.
+    #### Syncing to Gemini
+    Run:
 
-#### Syncing to `.windsurfrules`
-Run:
+    ```bash
+    aos sync --harnesses gemini,gemini_root
+    ```
 
-```bash
-aos sync --harnesses windsurf
-```
+    AOS generates or updates both instruction files with active substrate invariants:
 
-AOS injects active invariants into `.windsurfrules`:
+    ```markdown
+    # Google Gemini & Antigravity Instructions
 
-```markdown
-<!-- AOS_INVARIANTS_START -->
-## Active Substrate Invariants (Machine-Enforced)
-The following invariants are actively enforced by the Agent Operating Substrate.
-You must strictly obey these constraints in every proposed patch:
+    You are Google Gemini / Antigravity coding assistant. You must strictly enforce the following machine-enforced repository invariants:
 
-### [perf-avx-align-001] (Enforcement: reject_diff)
-* Statement: PointBuffer structures passed to AVX2/AVX-512 kernels must be aligned to 32-byte boundaries.
-* Rationale: Unaligned memory loads trigger general protection faults under high-throughput vector execution.
-* Paths: src/geometry/simd/**, include/geometry/simd/**
-* Languages: cpp, cuda
-<!-- AOS_INVARIANTS_END -->
-```
+    <!-- AOS_INVARIANTS_START -->
+    ## Active Substrate Invariants (Machine-Enforced)
+    ...
+    <!-- AOS_INVARIANTS_END -->
+    ```
 
-***
+=== "OpenAI Codex & ChatGPT"
+    OpenAI Codex and ChatGPT Developer mode read instructions from `CODEX.md` and `.openai/instructions.md`.
 
-### 5. Universal Git Pre-Commit Hook
+    #### Syncing to Codex
+    Run:
 
-Prompt instructions are advisory: large language models can hallucinate, overlook negative constraints, or encounter context truncations. The Git pre-commit hook provides deterministic verification.
+    ```bash
+    aos sync --harnesses codex,codex_root
+    ```
 
-#### Installation
-Install the universal hook with a single command:
+    AOS creates `CODEX.md` at root and `.openai/instructions.md` with active invariants.
 
-```bash
-aos hook install
-```
+=== "Aider, Cline & Amazon Q"
+    AOS supports open-source pairing tools and cloud assistants:
 
-Output:
-```text
-Installed AOS pre-commit hook at .git/hooks/pre-commit
-```
+    * **Aider:** `aos sync --harnesses aider` compiles active invariants into `CONVENTIONS.md`.
+    * **Cline:** `aos sync --harnesses cline` compiles invariants into `.clinerules`.
+    * **Roo Code:** `aos sync --harnesses roo` compiles invariants into `.roomodes`.
+    * **Amazon Q Developer:** `aos sync --harnesses amazonq` compiles invariants into `.amazonq/rules.md`.
+    * **Universal Agents Standard:** `aos sync --harnesses agents` compiles invariants into `AGENTS.md`.
 
-#### How the Hook Works
-The hook script at `.git/hooks/pre-commit` runs `aos hook run`. Before Git creates any commit object, AOS performs three checks:
+=== "Git Pre-Commit Hook"
+    Prompt instructions are advisory: large language models can hallucinate, overlook negative constraints, or encounter context truncations. The Git pre-commit hook provides deterministic verification.
 
-1. **Staged File Invariant Evaluation:** Matches staged files against all active rules in `.agents/substrate/active/`. If content in the staged diff violates an invariant (such as forbidden raw SQL or unaligned buffers), the commit aborts.
-2. **Surgical Diff Limits:** Enforces rule `aos-diff-002`, verifying that contiguous diff additions do not exceed 30 lines without explicit technical justification.
-3. **Punctuation Constraints:** Enforces rule `aos-punct-001`, rejecting files containing forbidden typographic artifacts like em dashes.
+    #### Installation
+    Install the universal hook with a single command:
 
-#### Testing the Hook Manually
-You can test your staged files at any time without committing:
+    ```bash
+    aos hook install
+    ```
 
-```bash
-# Stage changes
-git add src/geometry/simd/kernel.cpp
+    Output:
+    ```text
+    Installed AOS pre-commit hook at .git/hooks/pre-commit
+    ```
 
-# Run the pre-commit check
-aos hook run
-```
+    #### How the Hook Works
+    The hook script at `.git/hooks/pre-commit` runs `aos hook run`. Before Git creates any commit object, AOS performs three checks:
 
-If a violation is present, AOS prints exact file paths, line numbers, and the rationale:
+    1. **Staged File Invariant Evaluation:** Matches staged files against all active rules in `.agents/substrate/active/`. If content in the staged diff violates an invariant (such as forbidden raw SQL or unaligned buffers), the commit aborts.
+    2. **Surgical Diff Limits:** Enforces rule `aos-diff-002`, verifying that contiguous diff additions do not exceed 30 lines without explicit technical justification.
+    3. **Punctuation Constraints:** Enforces rule `aos-punct-001`, rejecting files containing forbidden typographic artifacts like em dashes.
 
-```text
-[AOS Hook] Evaluating staged files against active substrate invariants...
-- [perf-avx-align-001] src/geometry/simd/kernel.cpp:42: PointBuffer structures passed to AVX2/AVX-512 kernels must be aligned to 32-byte boundaries. (reject_diff)
+    #### Testing the Hook Manually
+    You can test your staged files at any time without committing:
 
-Commit blocked by AOS invariant enforcer. Correct the violations listed above.
-```
+    ```bash
+    # Stage changes
+    git add src/geometry/simd/kernel.cpp
 
-To uninstall the hook at any time:
+    # Run the pre-commit check
+    aos hook run
+    ```
 
-```bash
-aos hook uninstall
-```
+    If a violation is present, AOS prints exact file paths, line numbers, and the rationale:
+
+    ```text
+    [AOS Hook] Evaluating staged files against active substrate invariants...
+    - [perf-avx-align-001] src/geometry/simd/kernel.cpp:42: PointBuffer structures passed to AVX2/AVX-512 kernels must be aligned to 32-byte boundaries. (reject_diff)
+
+    Commit blocked by AOS invariant enforcer. Correct the violations listed above.
+    ```
+
+    To uninstall the hook at any time:
+
+    ```bash
+    aos hook uninstall
+    ```
 
 ***
 
@@ -284,8 +298,8 @@ AOS solves prompt drift through **bounded projection**:
 1. **Single Source of Truth:** All rules live as atomic, versioned YAML files in `.agents/substrate/active/`.
 2. **Deterministic Formatting:** `aos sync` renders active rules into a standardized markdown block.
 3. **Marker Isolation:** AOS locates the delimiter tags:
-   * `<!-- AOS_INVARIANTS_START -->`
-   * `<!-- AOS_INVARIANTS_END -->`
+    * `<!-- AOS_INVARIANTS_START -->`
+    * `<!-- AOS_INVARIANTS_END -->`
 4. **Non-Destructive Replacement:** If the markers exist in the target configuration file, AOS replaces only the content between them. If the markers do not exist, AOS appends them cleanly to the end of the file.
 5. **Zero Human Overwrite:** Custom prompt instructions written by developers above or below the markers are never modified.
 

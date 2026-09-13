@@ -1,11 +1,15 @@
 # Agent Operating Substrate (AOS)
 
+<p align="center">
+  <img src="assets/banner.jpg" alt="Agent Operating Substrate (AOS) Hero Banner" width="100%">
+</p>
+
 ### The Universal AI Behavior Firewall & Vendor-Agnostic Control Plane across Gemini, Claude, Codex, Copilot, Cursor, and Windsurf.
 
 ***
 
-> [!NOTE]
-> **Autonomous Agent Development & Transparency**: The Agent Operating Substrate is designed, implemented, and maintained autonomously by AI agents (`AOS Agent`). The agents identify codebase improvements, conduct failure autopsies, synthesize invariant rules, and maintain repository health under human supervisory oversight. All post-initial release development proceeds via Pull Requests / Merge Requests to facilitate parallel collaboration between multiple agents and human engineers.
+!!! note "Autonomous Agent Development & Transparency"
+    The Agent Operating Substrate is designed, implemented, and maintained autonomously by AI agents (`AOS Agent`). The agents identify codebase improvements, conduct failure autopsies, synthesize invariant rules, and maintain repository health under human supervisory oversight. All post-initial release development proceeds via Pull Requests / Merge Requests to facilitate parallel collaboration between multiple agents and human engineers.
 
 ## The Core Thesis
 
@@ -28,23 +32,25 @@ This constant manual routing creates cognitive exhaustion and prevents engineeri
 ### 3. Model Drift and Vendor Lock-in
 Engineering teams cannot afford to tie repository safety to a single model provider. When models update or teams switch between Gemini, Claude, Codex, or local open-weights LLMs, unstructured natural language prompts drift, rules get silently bypassed, and regressions resurface.
 
-```
-Traditional Hub-and-Spoke (Fragile, Manual, High Babysitting Tax):
-Agent A <======> Human Engineer <======> Agent B
-                     ▲
-                     │ (Manual Prompts, Diff Copying, Error Tracing)
-                     ▼
-                  Agent C
+```mermaid
+flowchart TD
+    subgraph Traditional["Traditional Hub-and-Spoke (Fragile & High Babysitting Tax)"]
+        A1["Agent A"] <--> H["Human Engineer<br/>(Manual Routing & Tracing)"]
+        H <--> B1["Agent B"]
+        H <--> C1["Agent C"]
+    end
 
-AOS Stigmergic Substrate (Autonomous, Decentralized, Zero Human Routing):
-Agent A ───────┐                       ┌─────── Agent B
-               ▼                       ▼
-     ┌───────────────────────────────────────────┐
-     │         Repository Rule Substrate         │
-     │  (.agents/substrate/ & blackboard/events) │
-     └───────────────────────────────────────────┘
-               ▲                       ▲
-Agent C ───────┘                       └─────── Agent D
+    subgraph Stigmergic["AOS Stigmergic Substrate (Autonomous & Decentralized)"]
+        Substrate[("Repository Rule Substrate<br/>.agents/substrate/ & blackboard/events.jsonl")]
+        A2["Agent A (Worker)"] --> Substrate
+        B2["Agent B (Auditor)"] --> Substrate
+        C2["Agent C (Critic)"] --> Substrate
+        D2["Agent D (Curator)"] --> Substrate
+        Substrate --> A2
+        Substrate --> B2
+        Substrate --> C2
+        Substrate --> D2
+    end
 ```
 
 ### The Solution: The Stigmergic Rule Substrate
@@ -91,28 +97,37 @@ When builds fail or tests crash, `aos exec -- <command>` intercepts the failure,
 
 Equip your repository with autonomous agent enforcement in five simple steps:
 
-```bash
-# 1. Install AOS (pure Python, zero external dependencies)
-pip install -e .
+=== "1. Quickstart Commands"
+    ```bash
+    # Install AOS (pure Python, zero external dependencies)
+    pip install -e .
 
-# 2. Initialize the .agents/ substrate directory structure
-aos init
+    # Initialize the .agents/ substrate directory structure
+    aos init
 
-# 3. Install a curated production security rule pack
-aos pack install security-owasp
+    # Install a curated production security rule pack
+    aos pack install security-owasp
 
-# 4. Sync active invariants to your agent harnesses (Cursor, Windsurf, Copilot, Claude)
-aos sync
+    # Sync active invariants to all agent harnesses (Cursor, Windsurf, Copilot, Claude, Gemini, Codex)
+    aos sync
 
-# 5. Install the universal git pre-commit firewall
-aos hook install
-```
+    # Install the universal git pre-commit firewall
+    aos hook install
+    ```
 
-Validate any source file or proposed diff instantly:
+=== "2. Verify Files"
+    Validate any source file or proposed diff against active rules instantly:
 
-```bash
-aos rules check src/aos/cli.py --enforce
-```
+    ```bash
+    aos rules check src/aos/cli.py --enforce
+    ```
+
+=== "3. Launch Web Dashboard"
+    Inspect active rules and connected harnesses in your browser:
+
+    ```bash
+    aos ui --port 8484
+    ```
 
 ***
 
@@ -258,23 +273,11 @@ AOS Enterprise Fleet Synchronization connects independent repositories into an i
 
 ***
 
-## Key Platform Benefits
-
-| Capability | Without AOS | With AOS |
-| :--- | :--- | :--- |
-| **Error Retention** | Amnesia: Lessons lost after session closes | Machine-inscribed YAML invariants stored in Git |
-| **Multi-Agent Flow** | Manual human-as-router copy-paste | Unprompted stigmergic blackboard coordination |
-| **Pre-Commit Defense** | Broken builds and regressions reach CI | Universal git pre-commit rejection of invariant breaches |
-| **Tool Interoperability** | Siloed configurations per editor | Unified compilation to Cursor, Windsurf, Copilot, and Claude Code |
-| **Rule Health** | Rule bloat and conflicting instructions | Autonomous pruning, subsumption, and decay curation |
-| **Infrastructure** | Heavy external databases and message brokers | Zero external dependencies: local Git, JSON, YAML, and SQLite |
-
-***
-
 ## Next Steps
 
 * [Getting Started](getting-started.md): Complete setup, harness synchronization, and MCP configuration.
 * [AI Vendor Abstraction](vendor-abstraction.md): Decoupling repository invariants and control planes from LLM providers.
+
 * [IDE & Tool Integration](ide-integration.md): Step-by-step guides for Cursor, Claude Code, Copilot, Windsurf, and Git pre-commit hooks.
 * [Control Plane Web Dashboard](control-plane-ui.md): Visual tour of real-time guardrail controls and diff testing.
 * [Curated Rule Packs](rule-packs.md): Battle-tested security, architecture, and performance invariant packs.

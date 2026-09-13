@@ -4,30 +4,22 @@
 
 ***
 
-> [!NOTE]
-> **Autonomous Agent Origin**: The Agent Operating Substrate is designed, implemented, and maintained autonomously by AI agents (`AOS Agent`). All post-initial release enhancements follow a strict Pull Request / Merge Request workflow to ensure concurrent collaboration between multiple autonomous agents and human developers.
+!!! note "Autonomous Agent Origin"
+    The Agent Operating Substrate is designed, implemented, and maintained autonomously by AI agents (`AOS Agent`). All post-initial release enhancements follow a strict Pull Request / Merge Request workflow to ensure concurrent collaboration between multiple autonomous agents and human developers.
 
 ## The Model Churn Dilemma
 
-Enterprise engineering teams are adopting AI coding assistants at an unprecedented rate. However, software leaders face a compounding strategic challenge: **AI model churn and vendor lock-in**.
+Enterprise engineering teams adopt AI coding assistants at breakneck pace. Yet software leaders face **AI model churn and vendor lock-in**: OpenAI, Anthropic, Google, and open-weights creators update models weekly, while developer tooling fragments across Cursor, Windsurf, Copilot, Amazon Q, and Claude Code.
 
-The AI ecosystem evolves weekly:
-* OpenAI releases GPT-4o, Codex updates, and reasoning models.
-* Anthropic iterates on Claude 3.5 Sonnet and Claude Code.
-* Google advances Gemini 1.5 Pro, Gemini Code Assist, and Antigravity.
-* Open-weights ecosystems deliver competitive reasoning with DeepSeek-R1, Llama 3, and Mistral.
-* Developer tooling fragments across Cursor, Windsurf, GitHub Copilot, Amazon Q Developer, Aider, and Cline.
+The diagram below illustrates the fragility of managing disparate vendor rules independently:
 
-```
-Without AOS (Fragile, Fragmented, Vendor Locked):
-┌────────────────┐     ┌────────────────┐     ┌────────────────┐
-│ Cursor Rules   │     │ Windsurf Rules │     │ Claude Prompts │
-│ (.cursorrules) │     │(.windsurfrules)│     │  (CLAUDE.md)   │
-└───────┬────────┘     └───────┬────────┘     └───────┬────────┘
-        ▼                      ▼                      ▼
-  Model Drift            Model Drift            Model Drift
-  Different Syntax       Different Syntax       Different Syntax
-  Inconsistent Checks    Inconsistent Checks    Inconsistent Checks
+```mermaid
+flowchart TD
+    subgraph Fragmented["Without AOS: Fragmented, Vulnerable, Vendor-Locked"]
+        CR[".cursorrules<br/>(Cursor)"] --> D1["Prompt Drift & Inconsistent Checks"]
+        WR[".windsurfrules<br/>(Windsurf)"] --> D2["Different Syntax & Attention Limits"]
+        CM["CLAUDE.md<br/>(Claude Code)"] --> D3["Model Updates Break Adherence"]
+    end
 ```
 
 When teams embed policies directly inside vendor-specific prompt files, they incur severe costs:
@@ -43,27 +35,23 @@ The Agent Operating Substrate (AOS) abstracts away the model layer entirely.
 
 AOS establishes an independent, machine-readable behavior control plane inside your repository. Whether code is drafted by Gemini 1.5 Pro, Claude 3.5 Sonnet, OpenAI Codex, or local DeepSeek running in an air-gapped environment, AOS guarantees the exact same repository guardrails, memory, and pre-commit verification.
 
-```
-With AOS (Unified, Vendor-Agnostic Control Plane):
-             ┌──────────────────────────────────────────────┐
-             │       Single Source of Truth Substrate       │
-             │          (.agents/substrate/active)          │
-             └──────────────────────┬───────────────────────┘
-                                    │ (aos sync & aos mcp)
-        ┌───────────────────────────┼───────────────────────────┐
-        ▼                           ▼                           ▼
-┌───────────────┐           ┌───────────────┐           ┌───────────────┐
-│ Google Gemini │           │Anthropic Claud│           │ OpenAI Codex  │
-│ (Code Assist) │           │ (Claude Code) │           │   (ChatGPT)   │
-└───────┬───────┘           └───────┬───────┘           └───────┬───────┘
-        │                           │                           │
-        └───────────────────────────┼───────────────────────────┘
-                                    │ (Staged Commits)
-                                    ▼
-             ┌──────────────────────────────────────────────┐
-             │         Deterministic Git Firewall           │
-             │               (aos hook run)                 │
-             └──────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    Substrate[("Single Source of Truth Substrate<br/>.agents/substrate/active/")]
+    
+    Substrate -->|"aos sync / aos mcp"| Gemini["Google Gemini<br/>(Code Assist / Antigravity)"]
+    Substrate -->|"aos sync / aos mcp"| Claude["Anthropic Claude<br/>(Claude Code / Projects)"]
+    Substrate -->|"aos sync / aos mcp"| Codex["OpenAI Codex<br/>(ChatGPT / GPT-4o)"]
+    Substrate -->|"aos sync / aos mcp"| Others["Cursor, Windsurf, Copilot, Amazon Q"]
+    
+    Gemini -->|"Staged Commits"| GitHook
+    Claude -->|"Staged Commits"| GitHook
+    Codex -->|"Staged Commits"| GitHook
+    Others -->|"Staged Commits"| GitHook
+    
+    GitHook{"Deterministic Git Firewall<br/>(aos hook run)"}
+    GitHook -->|"Complies"| Commit["Commit Accepted (Exit 0)"]
+    GitHook -->|"Violates"| Block["Commit Rejected (Exit 1)<br/>Actionable Remediation Log"]
 ```
 
 ***
@@ -165,5 +153,6 @@ Adopting a vendor-agnostic behavior control plane yields substantial business ad
 
 * [Getting Started Guide](getting-started.md): Install AOS and initialize your repository substrate in 5 minutes.
 * [IDE & Tool Integration](ide-integration.md): Step-by-step harness setup for Cursor, Claude Code, Copilot, and Windsurf.
+
 * [Curated Rule Packs](rule-packs.md): Browse production-grade security, architecture, and performance packs.
 * [Enterprise Fleet Governance](enterprise-fleet.md): Synchronize invariants across hundreds of enterprise repositories.

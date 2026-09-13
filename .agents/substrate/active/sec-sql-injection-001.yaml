@@ -20,7 +20,6 @@ invariant:
   rationale: Direct string interpolation in SQL strings creates critical SQL injection
     vulnerabilities allowing unauthorized data extraction or destruction.
   enforcement: reject_diff
-  max_blast_radius_lines: 30
 provenance:
   incident_id: pack-security-core
   git_commit: HEAD

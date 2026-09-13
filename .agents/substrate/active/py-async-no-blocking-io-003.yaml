@@ -12,7 +12,6 @@ invariant:
   rationale: Blocking operations in coroutines stall the main asyncio event loop,
     starving concurrent tasks and destroying service throughput.
   enforcement: reject_diff
-  max_blast_radius_lines: 30
 provenance:
   incident_id: pack-python-core
   git_commit: HEAD

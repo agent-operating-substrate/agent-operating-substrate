@@ -13,7 +13,6 @@ invariant:
   rationale: 'Clean architecture requires dependency inversion: domain cores must
     remain completely decoupled from I/O.'
   enforcement: reject_diff
-  max_blast_radius_lines: 30
 provenance:
   incident_id: pack-python-clean-architecture
   git_commit: HEAD

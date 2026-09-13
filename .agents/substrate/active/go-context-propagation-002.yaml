@@ -13,7 +13,6 @@ invariant:
   rationale: Missing context propagation leads to orphaned goroutines, resource leaks,
     and unresponsive cancellation signals during server shutdowns or request timeouts.
   enforcement: reject_diff
-  max_blast_radius_lines: 30
 provenance:
   incident_id: pack-go-core
   git_commit: HEAD

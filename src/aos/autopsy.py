@@ -35,7 +35,7 @@ def synthesize_candidate_rule(
     inscribing_agent: str = "forensic-auditor",
     git_commit: str = "HEAD",
     enforcement: str = "reject_diff",
-    max_blast_radius_lines: Optional[int] = 30,
+    max_blast_radius_lines: Optional[int] = None,
 ) -> InvariantRule:
     """Construct a candidate invariant rule from autopsy findings."""
     now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")

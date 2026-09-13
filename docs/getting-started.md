@@ -6,18 +6,16 @@
 
 ## What You Achieve in 5 Minutes
 
-The Agent Operating Substrate (AOS) is a vendor-agnostic behavior firewall and permanent memory layer for AI coding assistants. It stops AI tools across Gemini, Claude, Codex, Copilot, Cursor, Windsurf, Aider, and local models from repeating mistakes or making breaking changes to your codebase.
+AOS equips any software repository with a vendor-agnostic behavior firewall, permanent failure memory, and multi-agent coordination in under five minutes.
 
-Setting up AOS equips your codebase with an autonomous behavior firewall, unified memory, and complete vendor abstraction in under five minutes.
+By completing this guide, you will deploy:
+1. **The Universal Git Pre-Commit Barrier:** Deterministically blocks broken agent commits and non-compliant code before it leaves your machine.
+2. **Single-Source Prompt Synchronization:** Compiles active invariants into `.cursorrules`, `.windsurfrules`, `.github/copilot-instructions.md`, and `CLAUDE.md`.
+3. **Live Model Context Protocol (MCP) Server:** Equips AI agents with interactive rule-checking tools inside their native IDE context.
+4. **Automated Failure Autopsies:** Turns runtime compiler errors and test crashes into permanent, machine-enforced invariant rules.
+5. **Production Security Baselines:** Applies curated OWASP and clean architecture rules instantly.
 
-By completing this guide, you will have:
-1. **The Universal Git Pre-Commit Barrier:** Deterministically blocking broken agent commits and non-compliant code before it leaves your machine.
-2. **Single Source of Truth Prompt Synchronization:** Automatically compiling active invariants into `.cursorrules`, `.windsurfrules`, `.github/copilot-instructions.md`, and `CLAUDE.md`.
-3. **A Live Model Context Protocol (MCP) Server:** Equipping AI agents with interactive rule-checking tools inside their native IDE context.
-4. **Automated Failure Autopsies:** Turning runtime compiler errors and test failures into permanent, machine-enforced invariant rules.
-5. **Production Security Baselines:** Applying curated OWASP and clean architecture rules instantly.
-
-**Requirements:** Python 3.11+ and Git. Zero cloud accounts, zero external microservices, and zero changes to your existing source code.
+**Requirements:** Python 3.11+ and Git. Zero cloud accounts, zero external microservices, and zero changes to existing source code.
 
 ***
 
@@ -36,6 +34,9 @@ AOS introduces a few specialized terms rooted in decentralized systems. Here is 
 | **Stigmergy & Blackboard** | An append-only event ledger (`events.jsonl`) where multiple agents coordinate asynchronously through file traces without human routing. |
 
 ***
+
+!!! tip "Zero External Dependencies"
+    AOS is pure Python standard library and local filesystem primitives (JSON, YAML, SQLite). It requires no Docker daemon, no vector database, and no cloud subscriptions.
 
 ## Step 1: Installation
 
@@ -158,6 +159,9 @@ Substrate Rules (root: .):
   [ACTIVE] sec-sql-injection-001: Raw SQL query string concatenation is prohibited. All database queries must use parameterized queries or ORM bindings. (v1)
 ```
 
+!!! tip "Automated Repository Ingestion: `aos ingest`"
+    Instead of picking packs manually, you can run `aos ingest --promote --install-packs` to automatically scan your repository manifests (`tsconfig.json`, `pyproject.toml`, `Cargo.toml`, `go.mod`) and team instructions (`CLAUDE.md`, `AGENTS.md`) to synthesize tailored guardrails matching your stack.
+
 ***
 
 ## Step 4: Sync Agent Harness Configurations
@@ -166,45 +170,40 @@ Different engineers on your team use different models and tools: Google Gemini (
 
 Rather than maintaining separate prompt instructions in each tool or suffering prompt drift across different LLM providers, `aos sync` compiles all active rules from `.agents/substrate/active/` and injects them directly into your agent harness configuration files:
 
-```bash
-aos sync
-```
+=== "Sync All Connected Tools"
+    ```bash
+    aos sync
+    ```
 
-Output:
-```text
-Synced 5 agent harness configuration(s):
-- cursor: .cursorrules
-- cursor_mdc: .cursor/rules/aos-invariants.mdc
-- windsurf: .windsurfrules
-- copilot: .github/copilot-instructions.md
-- claude: CLAUDE.md
-```
+    Output:
+    ```text
+    Synced 14 agent harness configuration(s):
+    - cursor: .cursorrules
+    - cursor_mdc: .cursor/rules/aos-invariants.mdc
+    - gemini: .gemini/instructions.md
+    - gemini_root: GEMINI.md
+    - codex: .openai/instructions.md
+    - codex_root: CODEX.md
+    - claude: CLAUDE.md
+    - windsurf: .windsurfrules
+    - copilot: .github/copilot-instructions.md
+    - aider: CONVENTIONS.md
+    - cline: .clinerules
+    - roo: .roomodes
+    - amazonq: .amazonq/rules.md
+    - agents: AGENTS.md
+    ```
 
-### Prompt Projection Mechanism
+=== "Target Specific Tools"
+    You can also target specific harnesses when needed:
 
-AOS safely bounds injected rules using deterministic HTML comment markers:
+    ```bash
+    # Target only Cursor and Claude Code
+    aos sync --harnesses cursor,claude
 
-```markdown
-<!-- AOS_INVARIANTS_START -->
-## Active Substrate Invariants (Machine-Enforced)
-The following invariants are actively enforced by the Agent Operating Substrate.
-You must strictly obey these constraints in every proposed patch:
-
-### [sec-sql-injection-001] (Enforcement: reject_diff)
-* Statement: Raw SQL query string concatenation is prohibited. All database queries must use parameterized queries or ORM bindings.
-* Rationale: Prevents critical SQL injection vulnerabilities in database access layers.
-* Paths: src/**, app/**, api/**
-* Languages: python, typescript, javascript, go
-<!-- AOS_INVARIANTS_END -->
-```
-
-Any existing human-written instructions outside these markers remain completely untouched.
-
-You can also target specific harnesses when needed:
-
-```bash
-aos sync --harnesses cursor,claude
-```
+    # Target Gemini and GitHub Copilot
+    aos sync --harnesses gemini,copilot
+    ```
 
 ***
 
@@ -333,11 +332,13 @@ Open `http://127.0.0.1:8484` in your web browser to explore your repository's li
 
 ## Summary of the Daily Workflow
 
-```
-1. Inscribe Invariants ───> 2. Sync Prompts (aos sync) ───> 3. Code Generation
-         ▲                                                           │
-         │                                                           ▼
-5. Curate & Consolidate <── 4. Verify (aos hook & CI) <────── Pre-Commit Check
+```mermaid
+flowchart LR
+    Step1["1. Inscribe Invariants<br/>(.agents/substrate/active)"] --> Step2["2. Sync Prompts<br/>(aos sync)"]
+    Step2 --> Step3["3. Code Generation<br/>(Gemini, Claude, Codex, Cursor)"]
+    Step3 --> Step4["4. Pre-Commit Barrier<br/>(aos hook run)"]
+    Step4 --> Step5["5. Curate & Inscribe<br/>(aos curate / autopsy)"]
+    Step5 --> Step1
 ```
 
 Your coding agents now operate within strict, machine-enforced guardrails that improve after every failure.
@@ -348,6 +349,7 @@ Your coding agents now operate within strict, machine-enforced guardrails that i
 
 * [AI Vendor Abstraction](vendor-abstraction.md): Deep dive on decoupling repository invariants and control planes from LLM providers.
 * [IDE & Tool Integration](ide-integration.md): Step-by-step setup for Cursor, Claude Code, Copilot, Windsurf, and Git pre-commit hooks.
+
 * [Control Plane Web Dashboard](control-plane-ui.md): Visual tour of real-time guardrail controls, diff testing, and incident autopsies.
 * [Curated Rule Packs](rule-packs.md): Catalog of security, clean architecture, and SIMD performance invariant packs.
 * [Architecture & Theoretical Foundations](architecture.md): Deep dive into the three inscription loops and stigmergy.

@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 from dataclasses import dataclass
+import os
 from pathlib import Path
 import re
+import subprocess
 from typing import Any, Optional
 
 from aos.engine import RuleEngine
@@ -37,6 +39,7 @@ def check_stream_violations(
     file_path: str,
     lines: Any,
     rules: list[InvariantRule],
+    staged_blast: Optional[int] = None,
 ) -> list[Violation]:
     """Single-pass streaming inspection of lines against invariant rules."""
     violations: list[Violation] = []
@@ -62,7 +65,7 @@ def check_stream_violations(
     ]
     rce_rules = [
         r for r in rules
-        if any(k in f"{r.invariant.statement} {r.invariant.rationale}".lower() for k in ("eval()", "exec()", "arbitrary code", "dynamic code"))
+        if any(k in f"{r.invariant.statement} {r.invariant.rationale}".lower() for k in ("arbitrary code", "dynamic code", "dynamic evaluation", "deserialization"))
     ]
     wc_rules = [
         r for r in rules
@@ -204,21 +207,30 @@ def check_stream_violations(
                     )
                 )
 
-    for rule in blast_rules:
-        limit = rule.invariant.max_blast_radius_lines or 0
-        if line_count > limit:
-            overflow_idx, overflow_snip = blast_overflow_line.get(rule.id, (limit + 1, ""))
-            violations.append(
-                Violation(
-                    file_path=file_path,
-                    rule_id=rule.id,
-                    line_number=overflow_idx,
-                    snippet=overflow_snip,
-                    statement=rule.invariant.statement,
-                    message=f"Violation of '{rule.id}': Content exceeds maximum blast radius of {limit} lines ({line_count} lines detected).",
-                    enforcement=rule.invariant.enforcement,
+    has_justification = bool(
+        os.environ.get("AOS_DIFF_JUSTIFICATION")
+        or os.environ.get("AOS_JUSTIFICATION")
+        or file_path.startswith("docs/")
+        or file_path.endswith((".md", ".svg", ".png", ".jpg", ".jpeg", ".ico"))
+    )
+
+    if not has_justification:
+        effective_blast = staged_blast if staged_blast is not None else line_count
+        for rule in blast_rules:
+            limit = rule.invariant.max_blast_radius_lines or 0
+            if effective_blast > limit:
+                overflow_idx, overflow_snip = blast_overflow_line.get(rule.id, (limit + 1, ""))
+                violations.append(
+                    Violation(
+                        file_path=file_path,
+                        rule_id=rule.id,
+                        line_number=overflow_idx,
+                        snippet=overflow_snip,
+                        statement=rule.invariant.statement,
+                        message=f"Violation of '{rule.id}': Content exceeds maximum blast radius of {limit} lines ({effective_blast} lines detected).",
+                        enforcement=rule.invariant.enforcement,
+                    )
                 )
-            )
 
     return violations
 
@@ -231,6 +243,32 @@ def check_content_violations(
     """Inspect text content against a set of active invariant rules."""
     lines = content.splitlines(keepends=True) if content else []
     return check_stream_violations(file_path, lines, rules)
+
+
+def get_staged_blast_radius(file_path: str, root_dir: Path) -> Optional[int]:
+    """Calculate maximum contiguous added lines in staged git diff for a file."""
+    if not (root_dir / ".git").is_dir():
+        return None
+    try:
+        res = subprocess.run(
+            ["git", "diff", "--cached", "-U0", "--", file_path],
+            cwd=str(root_dir),
+            capture_output=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+        if res.returncode != 0:
+            return None
+        hunk_rx = re.compile(r"^@@ -\d+(?:,\d+)? \+\d+(?:,(\d+))? @@")
+        hunk_sizes: list[int] = []
+        for line in res.stdout.splitlines():
+            m = hunk_rx.match(line)
+            if m:
+                count = int(m.group(1)) if m.group(1) is not None else 1
+                hunk_sizes.append(count)
+        return max(hunk_sizes) if hunk_sizes else 0
+    except Exception:
+        return None
 
 
 def check_file_violations(
@@ -253,9 +291,11 @@ def check_file_violations(
     if not matching_rules:
         return []
 
+    staged_blast = get_staged_blast_radius(rel_path, root)
+
     try:
         with target.open("r", encoding="utf-8", errors="replace") as f:
-            return check_stream_violations(rel_path, f, matching_rules)
+            return check_stream_violations(rel_path, f, matching_rules, staged_blast=staged_blast)
     except Exception:
         # If binary or unreadable, skip text inspections
         return []

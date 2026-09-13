@@ -1,5 +1,9 @@
 # Agent Operating Substrate (AOS)
 
+<p align="center">
+  <img src="docs/assets/banner.jpg" alt="Agent Operating Substrate (AOS) Hero Banner" width="100%">
+</p>
+
 ### The Universal AI Behavior Firewall & Vendor-Agnostic Control Plane across Gemini, Claude, Codex, Copilot, Cursor, and Windsurf.
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
@@ -320,17 +324,19 @@ Team A (Origin) ──> Inscribes Rule ──> aos fleet publish
 | `aos rules list` | List all invariant rules filtered by status (`active`, `candidate`, `archive`). |
 | `aos rules check <path>` | Check target files or directories against active invariant rules. |
 | `aos enforce <rule-id>` | Deterministically enforce an invariant rule against target files. |
-| `aos sync` | Sync active invariants into `.cursorrules`, `.windsurfrules`, Copilot, and Claude. |
+| `aos sync` | Sync active invariants into Gemini, Claude, Codex, Copilot, Cursor, Windsurf, Aider, and Cline. |
 | `aos hook install` | Install the universal git pre-commit hook into `.git/hooks/`. |
 | `aos hook run` | Execute pre-commit validation against staged files. |
 | `aos mcp` | Start the Model Context Protocol stdio server for live agent integration. |
 | `aos exec -- <cmd>` | Wrap command execution with autonomous failure autopsy and rule inscription. |
 | `aos pack list` | List available curated invariant rule packs. |
 | `aos pack install <pack>` | Install a curated rule pack into active (or candidate) status. |
+| `aos ingest` | Scan repository conventions and manifests to synthesize tailored invariants. |
 | `aos mesh simulate` | Simulate autonomous peer-to-peer agent mesh coordination. |
 | `aos fleet publish <id>` | Publish a local rule to the enterprise fleet mesh. |
 | `aos fleet sync` | Synchronize global fleet invariants into the local repository. |
 | `aos curate` | Autonomously prune, consolidate, and archive substrate rules. |
+| `aos identity` | Manage autonomous agent identities and supervisory mailboxes. |
 | `aos ui` | Launch the local web dashboard visualizer. |
 
 ***

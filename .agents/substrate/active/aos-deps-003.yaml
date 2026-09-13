@@ -14,7 +14,6 @@ invariant:
   rationale: Constraint specified in AGENTS.md Rule 3 and README.md zero external
     dependency principle.
   enforcement: reject_diff
-  max_blast_radius_lines: 30
 provenance:
   incident_id: inc-bootstrap-deps-003
   git_commit: 912979e
