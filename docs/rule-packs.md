@@ -208,6 +208,17 @@ After installing any pack, sync the newly added rules into your editor instructi
 aos sync
 ```
 
+#### 5. Uninstall Packs (Human or Agent Tuning)
+When repository requirements change or a pack is no longer needed, uninstall it via CLI or Web Control Plane:
+
+```bash
+# Archive pack rules (preserves audit provenance)
+aos pack uninstall security-core
+
+# Or permanently delete rules
+aos pack uninstall security-core --delete
+```
+
 ***
 
 ### Installing via Web Dashboard
@@ -229,8 +240,8 @@ Instead of picking rule packs manually, you can let AOS inspect your existing re
 # Scan and preview tailored guardrails derived from your stack and guidelines
 aos ingest --dry-run
 
-# Inscribe and immediately activate tailored guardrails
-aos ingest --promote
+# Inscribe and immediately activate tailored guardrails plus stack-recommended packs
+aos ingest --promote --install-packs
 ```
 
 ### What Ingestion Inspects

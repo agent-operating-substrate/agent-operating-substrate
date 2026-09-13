@@ -80,9 +80,10 @@ The execution loop runs whenever a worker agent attempts to solve a task:
 When an operation fails (a compiler error, test regression, linter failure, or pre-commit rejection), the Forensic Autopsy loop activates:
 
 1. **Failure Extraction:** The engine captures the exit code, standard error stream, and offending diff hunk.
-2. **False Assumption Diagnosis:** The autopsy analyzer determines what underlying belief led the agent to generate faulty code (e.g., assuming unaligned pointers are safe for vector instructions).
+2. **False Assumption Diagnosis:** The autopsy analyzer determines what underlying belief led the agent to generate faulty code.
 3. **Atomic Inscription Synthesis:** The system synthesizes a candidate rule in `.agents/substrate/candidate/<rule-id>.yaml` containing an invariant statement, rationale, target paths, and enforcement mode.
-4. **Peer Consensus Review:** A peer reviewer agent (or human maintainer) evaluates the candidate rule to ensure it is not overly specific to a one-off typo. Once approved, it is moved to `.agents/substrate/active/`.
+4. **Peer Consensus Review:** A peer reviewer agent or human maintainer evaluates the candidate rule. Once approved, it is moved to `.agents/substrate/active/`.
+5. **Proactive Prompt Inoculation:** The pre-commit barrier and autopsy engine immediately re-sync harness files (`CLAUDE.md`, `.cursorrules`, etc.) with compliant patterns and recent interception memory so agents avoid repeating the mistake.
 
 ### Loop 3: The Evolutionary Curation Loop (Background Cycle)
 
