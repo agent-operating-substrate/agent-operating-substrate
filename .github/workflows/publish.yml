@@ -44,7 +44,7 @@ jobs:
       - name: Create GitHub Release and Upload Assets
         uses: softprops/action-gh-release@v2
         with:
-          name: "Agent Operating Substrate ${{ github.ref_name }}: Initial Release"
+          name: "${{ github.ref_name }}"
           body_path: CHANGELOG.md
           files: |
             dist/*.tar.gz

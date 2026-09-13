@@ -47,6 +47,13 @@ Aider pairing assistant conventions: strictly adhere to the following machine-en
 * Paths: **/*
 * Max blast radius lines: 30
 
+### [gh-release-title-001] (Enforcement: reject_diff)
+* Statement: GitHub release titles must strictly contain only the version tag (e.g., ${{ github.ref_name }} or v0.2.0) without descriptive phrases or subtitles.
+* Rationale: Enforces clean, predictable release naming conventions across CI pipelines and release automation.
+* Paths: .github/workflows/*release*.yml, .github/workflows/*publish*.yml
+* Languages: yaml
+* Max blast radius lines: 30
+
 ### [go-context-propagation-002] (Enforcement: reject_diff)
 * Statement: Go functions performing I/O operations, network requests, database transactions, or concurrent tasks must accept context.Context as their first parameter and honor cancellation.
 * Rationale: Missing context propagation leads to orphaned goroutines, resource leaks, and unresponsive cancellation signals during server shutdowns or request timeouts.
