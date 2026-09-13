@@ -46,3 +46,43 @@ def test_inject_into_file_preserves_surrounding_content(tmp_path: Path):
     assert "Updated rule block." in second_updated
     assert "Injected rule block." not in second_updated
     assert "# My Custom Claude Instructions" in second_updated
+
+
+def test_format_rules_with_guidance_and_lessons(tmp_path: Path):
+    from aos.blackboard import post_event
+    rule = InvariantRule(
+        id="py-no-wildcard-import-002",
+        version=1,
+        status="active",
+        scope=Scope(paths=["**/*.py"], languages=["python"]),
+        invariant=Invariant(
+            statement="Wildcard imports ('from module import *') are prohibited.",
+            rationale="Pollutes module namespace.",
+            enforcement="reject_diff",
+        ),
+        provenance=Provenance(
+            incident_id="inc-wildcard",
+            git_commit="HEAD",
+            inscribing_agent="tester",
+            created_at="2026-09-08T18:00:00Z",
+            last_verified_at="2026-09-08T18:00:00Z",
+        ),
+    )
+    post_event(
+        {
+            "type": "PRE_COMMIT_BLOCKED",
+            "sender": "barrier",
+            "payload": {
+                "rule_id": "py-no-wildcard-import-002",
+                "file_path": "src/bad_file.py",
+                "message": "Wildcard import from os detected.",
+            },
+        },
+        root_dir=tmp_path,
+    )
+
+    rendered = format_rules_for_prompt([rule], root_dir=tmp_path)
+    assert "Compliant Pattern" in rendered
+    assert "Strictly Forbidden" in rendered
+    assert "Proactive Guardrail Memory: Recent Interceptions" in rendered
+    assert "src/bad_file.py" in rendered

@@ -13,6 +13,8 @@ You must strictly obey these constraints in every proposed patch:
 ### [aos-diff-002] (Enforcement: reject_diff)
 * Statement: Touch only lines strictly required to complete the assigned task. Never reformat adjacent code, comments, or imports. If a patch exceeds 30 contiguous lines, halt and provide technical justification.
 * Rationale: Constraint specified in AGENTS.md Rule 1 to maintain surgical precision and minimize blast radius.
+* Compliant Pattern: keep diffs surgical and focused strictly on the assigned task
+* Strictly Forbidden: unsolicited broad refactoring or mass formatting changes
 * Paths: **/*
 * Max blast radius lines: 30
 
@@ -26,6 +28,8 @@ You must strictly obey these constraints in every proposed patch:
 ### [gh-blast-radius-limit-003] (Enforcement: reject_diff)
 * Statement: Automated agent changes must maintain surgical precision by touching only required lines, maintaining single-task contiguous changes within 50 lines without unsolicited refactoring.
 * Rationale: Enforces surgical diff discipline to ensure modifications are reviewable, verifiable, and free from unintended regressions.
+* Compliant Pattern: keep diffs surgical and focused strictly on the assigned task
+* Strictly Forbidden: unsolicited broad refactoring or mass formatting changes
 * Paths: **/*
 * Max blast radius lines: 30
 
@@ -52,6 +56,8 @@ You must strictly obey these constraints in every proposed patch:
 ### [go-error-wrap-001] (Enforcement: reject_diff)
 * Statement: Go functions returning an error must have that error checked; discarding errors via blank identifier '_' is prohibited, and returned errors must be wrapped with contextual information using fmt.Errorf with %w.
 * Rationale: Preserves error context across package boundaries and enables errors.Is and errors.As inspection in caller packages.
+* Compliant Pattern: fmt.Errorf("context message: %w", err)
+* Strictly Forbidden: discarding errors or returning unwrapped bare errors
 * Paths: **/*.go
 * Languages: go
 * Max blast radius lines: 30
@@ -59,6 +65,8 @@ You must strictly obey these constraints in every proposed patch:
 ### [py-async-no-blocking-io-003] (Enforcement: reject_diff)
 * Statement: Asynchronous functions (async def) must not invoke synchronous blocking I/O calls such as time.sleep, synchronous requests, or blocking filesystem operations.
 * Rationale: Blocking operations in coroutines stall the main asyncio event loop, starving concurrent tasks and destroying service throughput.
+* Compliant Pattern: await asyncio.sleep(...) or run blocking calls in worker threads
+* Strictly Forbidden: calling time.sleep or synchronous I/O inside async def functions
 * Paths: **/*.py
 * Languages: python
 * Max blast radius lines: 30
@@ -73,6 +81,8 @@ You must strictly obey these constraints in every proposed patch:
 ### [py-no-bare-except-002] (Enforcement: reject_diff)
 * Statement: Catching Exception or bare except blocks must not silently suppress errors with pass; catch specific exception classes and log or re-raise errors.
 * Rationale: Silent exception swallowing hides fatal runtime errors, interrupts, and bugs, making forensic debugging and root-cause analysis impossible.
+* Compliant Pattern: except SpecificException as exc: logger.warning('...', exc_info=exc)
+* Strictly Forbidden: bare 'except:' or 'except Exception: pass'
 * Paths: **/*.py
 * Languages: python
 * Max blast radius lines: 30
@@ -80,6 +90,8 @@ You must strictly obey these constraints in every proposed patch:
 ### [py-no-wildcard-import-002] (Enforcement: reject_diff)
 * Statement: Wildcard imports ('from module import *') are prohibited; all imported symbols must be explicitly named or imported via the module namespace.
 * Rationale: Wildcard imports pollute module namespaces, mask circular dependencies, hide symbol origins, and break static analysis.
+* Compliant Pattern: import specific_module or from module import specific_symbol
+* Strictly Forbidden: from module import *
 * Paths: **/*.py
 * Languages: python
 * Max blast radius lines: 30
@@ -87,6 +99,8 @@ You must strictly obey these constraints in every proposed patch:
 ### [py-structured-logging-001] (Enforcement: warn)
 * Statement: Application, service, and core library code must use structured logging frameworks rather than standard print statements.
 * Rationale: Raw print statements lack log level metadata, bypass centralized observability aggregation, and pollute stdout streams.
+* Compliant Pattern: logger = logging.getLogger(__name__); logger.info(...)
+* Strictly Forbidden: calling print(...) in application and library modules
 * Paths: src/**/*.py, lib/**/*.py, app/**/*.py
 * Languages: python
 * Max blast radius lines: 30
@@ -115,6 +129,8 @@ You must strictly obey these constraints in every proposed patch:
 ### [rust-unsafe-safety-doc-001] (Enforcement: reject_diff)
 * Statement: Every unsafe block, unsafe function, or unsafe trait implementation in Rust must include a preceding '// SAFETY:' comment documenting invariant validity.
 * Rationale: Audit requirement ensuring memory safety invariants and preconditions are explicitly documented at each unsafe boundary to verify soundness.
+* Compliant Pattern: add preceding '// SAFETY: explanation of memory invariants' comment
+* Strictly Forbidden: undocumented unsafe blocks or functions
 * Paths: **/*.rs
 * Languages: rust
 * Max blast radius lines: 30
@@ -122,6 +138,8 @@ You must strictly obey these constraints in every proposed patch:
 ### [sec-no-secrets-001] (Enforcement: reject_diff)
 * Statement: API keys, private certificates, authentication tokens, and secrets must never be committed to source files or repository configuration.
 * Rationale: Hardcoded credentials in Git histories result in credential compromise, security audit failure, and unauthorized system access.
+* Compliant Pattern: os.environ.get('API_KEY') or pass via secure configuration
+* Strictly Forbidden: hardcoding raw API keys, secrets, or tokens in source files
 * Paths: **/*
 * Max blast radius lines: 30
 
@@ -155,6 +173,8 @@ You must strictly obey these constraints in every proposed patch:
 ### [team-agents-md-rule-3] (Enforcement: reject_diff)
 * Statement: If a patch exceeds 30 contiguous lines, halt and provide a technical justification.
 * Rationale: Extracted from team repository instructions in AGENTS.md.
+* Compliant Pattern: keep diffs surgical and focused strictly on the assigned task
+* Strictly Forbidden: unsolicited broad refactoring or mass formatting changes
 * Paths: **/*
 * Max blast radius lines: 30
 
@@ -168,6 +188,8 @@ You must strictly obey these constraints in every proposed patch:
 ### [ts-floating-promises-002] (Enforcement: reject_diff)
 * Statement: Asynchronous promises must be awaited, returned to the caller, or explicitly handled with a .catch() callback or void operator.
 * Rationale: Floating unhandled promises produce unhandled promise rejections, race conditions, and silently dropped async failures.
+* Compliant Pattern: await asyncCall(), void asyncCall(), or asyncCall().catch(...)
+* Strictly Forbidden: leaving asynchronous promises floating without await or .catch()
 * Paths: **/*.ts, **/*.tsx
 * Languages: typescript
 * Max blast radius lines: 30
@@ -175,7 +197,18 @@ You must strictly obey these constraints in every proposed patch:
 ### [ts-no-any-001] (Enforcement: reject_diff)
 * Statement: TypeScript variables, parameters, and return types must avoid explicit 'any'; use 'unknown', union types, generic constraints, or explicit interfaces instead.
 * Rationale: The 'any' type disables compiler type checking, concealing potential runtime type errors and eliminating editor refactoring safety.
+* Compliant Pattern: use unknown, generics, or an explicit interface/type
+* Strictly Forbidden: declaring variables, parameters, or return types as explicit 'any'
 * Paths: **/*.ts, **/*.tsx
 * Languages: typescript
 * Max blast radius lines: 30
+
+## Proactive Guardrail Memory: Recent Interceptions
+The following failure modes were recently intercepted by repository barriers.
+Ensure your implementation proactively avoids these exact patterns:
+* Intercepted [py-async-no-blocking-io-003]: Asynchronous functions (async def) must not invoke synchronous blocking I/O calls such as time.sleep, synchronous requests, or blocking filesystem operations.
+* Intercepted [py-no-bare-except-002]: Catching Exception or bare except blocks must not silently suppress errors with pass; catch specific exception classes and log or re-raise errors.
+* Intercepted [py-structured-logging-001]: Application, service, and core library code must use structured logging frameworks rather than standard print statements.
+* Intercepted [py-no-wildcard-import-002]: Wildcard imports ('from module import *') are prohibited; all imported symbols must be explicitly named or imported via the module namespace.
+* Intercepted [sec-safe-deserialization-001]: Untrusted dynamic input must not be processed with insecure deserialization primitives (pickle.loads, marshal, unsafe yaml.load) or arbitrary dynamic code evaluation (eval, exec).
 <!-- AOS_INVARIANTS_END -->
