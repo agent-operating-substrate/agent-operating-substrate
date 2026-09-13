@@ -16,12 +16,6 @@ You must strictly obey these constraints in every proposed patch:
 * Paths: **/*
 * Max blast radius lines: 30
 
-### [aos-punct-001] (Enforcement: reject_diff)
-* Statement: Zero em dashes in all prose, documentation, commit messages, and code comments. Use colons, commas, semicolons, parentheses, or separate sentences instead.
-* Rationale: Constraint specified in AGENTS.md Rule 2 to enforce unambiguous, clean punctuation.
-* Paths: **/*
-* Max blast radius lines: 30
-
 ### [fastapi-pydantic-001] (Enforcement: reject_diff)
 * Statement: FastAPI endpoint handlers must specify explicit Pydantic response_model and typed request payloads.
 * Rationale: Enforces runtime data validation, automatic serialization, and clean OpenAPI schema generation.
@@ -29,25 +23,44 @@ You must strictly obey these constraints in every proposed patch:
 * Languages: python
 * Max blast radius lines: 30
 
-### [go-error-wrap-001] (Enforcement: reject_diff)
-* Statement: Go functions must inspect non-nil error values and return wrapped errors with fmt.Errorf and %w.
-* Rationale: Preserves call context and enables errors.Is and errors.As inspection across package boundaries.
+### [gh-blast-radius-limit-003] (Enforcement: reject_diff)
+* Statement: Automated agent changes must maintain surgical precision by touching only required lines, maintaining single-task contiguous changes within 50 lines without unsolicited refactoring.
+* Rationale: Enforces surgical diff discipline to ensure modifications are reviewable, verifiable, and free from unintended regressions.
+* Paths: **/*
+* Max blast radius lines: 30
+
+### [gh-deps-sync-001] (Enforcement: reject_diff)
+* Statement: Changes to package dependency manifests (package.json, pyproject.toml, Cargo.toml, go.mod) must include synchronized updates to corresponding lockfiles.
+* Rationale: Desynchronized dependency manifests and lockfiles cause irreproducible builds, CI failures, and unexpected environment drift.
+* Paths: package.json, pyproject.toml, Cargo.toml, go.mod, requirements*.txt
+* Languages: json
+* Max blast radius lines: 30
+
+### [gh-no-artifacts-credentials-002] (Enforcement: reject_diff)
+* Statement: Build artifacts, compiled binaries, bytecode (.pyc, .class), local environment configuration files (.env), and IDE directories must not be committed to version control.
+* Rationale: Committing build outputs and local environment files bloats repository history, triggers merge conflicts, and leaks local configuration secrets.
+* Paths: **/*
+* Max blast radius lines: 30
+
+### [go-context-propagation-002] (Enforcement: reject_diff)
+* Statement: Go functions performing I/O operations, network requests, database transactions, or concurrent tasks must accept context.Context as their first parameter and honor cancellation.
+* Rationale: Missing context propagation leads to orphaned goroutines, resource leaks, and unresponsive cancellation signals during server shutdowns or request timeouts.
 * Paths: **/*.go
 * Languages: go
 * Max blast radius lines: 30
 
-### [perf-avx-align-001] (Enforcement: reject_diff)
-* Statement: PointBuffer structures passed to AVX2/AVX-512 kernels must be aligned to 32-byte boundaries.
-* Rationale: Unaligned memory loads trigger general protection faults under high-throughput vector execution.
-* Paths: src/geometry/simd/**, include/geometry/simd/**
-* Languages: cpp, cuda
+### [go-error-wrap-001] (Enforcement: reject_diff)
+* Statement: Go functions returning an error must have that error checked; discarding errors via blank identifier '_' is prohibited, and returned errors must be wrapped with contextual information using fmt.Errorf with %w.
+* Rationale: Preserves error context across package boundaries and enables errors.Is and errors.As inspection in caller packages.
+* Paths: **/*.go
+* Languages: go
 * Max blast radius lines: 30
 
-### [perf-zero-copy-002] (Enforcement: warn)
-* Statement: High-throughput streaming loops and packet parsers must operate on memory views or slices without heap reallocations.
-* Rationale: Intermediate buffer allocations degrade cache locality and introduce latency spikes in hot execution paths.
-* Paths: src/**/streaming/**, src/**/simd/**
-* Languages: cpp, python, rust
+### [py-async-no-blocking-io-003] (Enforcement: reject_diff)
+* Statement: Asynchronous functions (async def) must not invoke synchronous blocking I/O calls such as time.sleep, synchronous requests, or blocking filesystem operations.
+* Rationale: Blocking operations in coroutines stall the main asyncio event loop, starving concurrent tasks and destroying service throughput.
+* Paths: **/*.py
+* Languages: python
 * Max blast radius lines: 30
 
 ### [py-boundary-isolation-003] (Enforcement: reject_diff)
@@ -57,17 +70,24 @@ You must strictly obey these constraints in every proposed patch:
 * Languages: python
 * Max blast radius lines: 30
 
-### [py-no-print-001] (Enforcement: warn)
-* Statement: Core library and domain modules must utilize structured logging instead of standard print statements.
-* Rationale: Direct print calls pollute stdout and prevent log aggregation in production environments.
-* Paths: src/**
+### [py-no-bare-except-002] (Enforcement: reject_diff)
+* Statement: Catching Exception or bare except blocks must not silently suppress errors with pass; catch specific exception classes and log or re-raise errors.
+* Rationale: Silent exception swallowing hides fatal runtime errors, interrupts, and bugs, making forensic debugging and root-cause analysis impossible.
+* Paths: **/*.py
 * Languages: python
 * Max blast radius lines: 30
 
 ### [py-no-wildcard-import-002] (Enforcement: reject_diff)
-* Statement: Wildcard imports ('from module import *') are strictly prohibited.
-* Rationale: Wildcard imports cause namespace pollution, mask circular dependencies, and degrade linter performance.
-* Paths: src/**, tests/**
+* Statement: Wildcard imports ('from module import *') are prohibited; all imported symbols must be explicitly named or imported via the module namespace.
+* Rationale: Wildcard imports pollute module namespaces, mask circular dependencies, hide symbol origins, and break static analysis.
+* Paths: **/*.py
+* Languages: python
+* Max blast radius lines: 30
+
+### [py-structured-logging-001] (Enforcement: warn)
+* Statement: Application, service, and core library code must use structured logging frameworks rather than standard print statements.
+* Rationale: Raw print statements lack log level metadata, bypass centralized observability aggregation, and pollute stdout streams.
+* Paths: src/**/*.py, lib/**/*.py, app/**/*.py
 * Languages: python
 * Max blast radius lines: 30
 
@@ -79,54 +99,55 @@ You must strictly obey these constraints in every proposed patch:
 * Max blast radius lines: 30
 
 ### [react-hooks-deps-001] (Enforcement: reject_diff)
-* Statement: React hooks must declare exhaustive dependencies and avoid mutations of component state during rendering.
-* Rationale: Missing dependencies cause stale closure bugs and unpredictable re-rendering loops.
-* Paths: src/**/*.jsx, src/**/*.tsx
+* Statement: React hooks (useEffect, useMemo, useCallback) must declare exhaustive dependencies and must not mutate component state during rendering.
+* Rationale: Omitted dependencies cause stale closures and out-of-sync UI state, while state mutations in render cause infinite re-render loops.
+* Paths: src/**/*.jsx, src/**/*.tsx, app/**/*.tsx
 * Languages: javascript, typescript
 * Max blast radius lines: 30
 
-### [rust-unsafe-safety-doc-001] (Enforcement: reject_diff)
-* Statement: Every unsafe block in Rust must include a preceding '// SAFETY:' comment documenting invariant validity.
-* Rationale: Audit requirement ensuring memory safety invariants are documented at each unsafe boundary.
-* Paths: src/**/*.rs
+### [rust-no-unwrap-in-lib-002] (Enforcement: reject_diff)
+* Statement: Production Rust library and service code must not invoke .unwrap() or .expect() on Option or Result; propagate errors using '?' or handle them explicitly.
+* Rationale: Calling unwrap or expect panics the executing thread on unexpected conditions, crashing services without opportunity for graceful recovery.
+* Paths: src/**/*.rs, lib/**/*.rs
 * Languages: rust
 * Max blast radius lines: 30
 
-### [sec-rce-eval-004] (Enforcement: reject_diff)
-* Statement: Direct execution of dynamic input strings via eval(), exec(), or unsanitized shell commands is strictly prohibited.
-* Rationale: Arbitrary code execution vulnerabilities result from dynamic evaluation of untrusted strings.
+### [rust-unsafe-safety-doc-001] (Enforcement: reject_diff)
+* Statement: Every unsafe block, unsafe function, or unsafe trait implementation in Rust must include a preceding '// SAFETY:' comment documenting invariant validity.
+* Rationale: Audit requirement ensuring memory safety invariants and preconditions are explicitly documented at each unsafe boundary to verify soundness.
+* Paths: **/*.rs
+* Languages: rust
+* Max blast radius lines: 30
+
+### [sec-no-secrets-001] (Enforcement: reject_diff)
+* Statement: API keys, private certificates, authentication tokens, and secrets must never be committed to source files or repository configuration.
+* Rationale: Hardcoded credentials in Git histories result in credential compromise, security audit failure, and unauthorized system access.
+* Paths: **/*
+* Max blast radius lines: 30
+
+### [sec-safe-deserialization-001] (Enforcement: reject_diff)
+* Statement: Untrusted dynamic input must not be processed with insecure deserialization primitives (pickle.loads, marshal, unsafe yaml.load) or arbitrary dynamic code evaluation (eval, exec).
+* Rationale: Insecure deserialization and arbitrary eval calls allow attackers to execute arbitrary code via gadget chains and dynamic interpretation.
 * Paths: **/*
 * Languages: javascript, python, typescript
 * Max blast radius lines: 30
 
-### [sec-secret-leak-002] (Enforcement: reject_diff)
-* Statement: API keys, secrets, private certificates, and passwords must never be committed to source files.
-* Rationale: Hardcoded credentials in Git histories result in credential compromise and audit failure.
-* Paths: **/*
-* Max blast radius lines: 30
-
 ### [sec-sql-injection-001] (Enforcement: reject_diff)
-* Statement: SQL queries must use parameterized bind variables, never raw string interpolation or concatenation.
-* Rationale: Direct string interpolation in SQL strings creates critical SQL injection vulnerabilities.
+* Statement: SQL queries must use parameterized bind variables; raw string concatenation, format strings, or template interpolation is prohibited.
+* Rationale: Direct string interpolation in SQL strings creates critical SQL injection vulnerabilities allowing unauthorized data extraction or destruction.
 * Paths: **/*
-* Languages: go, java, javascript, python, typescript
+* Languages: csharp, go, java, javascript, php, python, ruby, rust, typescript
 * Max blast radius lines: 30
 
-### [sec-ssrf-003] (Enforcement: reject_diff)
-* Statement: Outbound HTTP requests constructed from dynamic input must validate targets against an allowlist and block private network ranges.
-* Rationale: Unvalidated network requests allow SSRF attacks targeting cloud metadata services and internal infrastructure.
+### [sec-ssrf-prevention-001] (Enforcement: reject_diff)
+* Statement: Outbound HTTP and network requests constructed from dynamic user input must validate hostnames against an allowlist and block private or link-local IP addresses.
+* Rationale: Unvalidated outbound network requests permit SSRF attacks targeting cloud instance metadata services and internal microservices.
 * Paths: **/*
-* Languages: go, javascript, python, typescript
+* Languages: go, java, javascript, python, rust, typescript
 * Max blast radius lines: 30
 
 ### [team-agents-md-rule-1] (Enforcement: reject_diff)
 * Statement: Touch only lines strictly required to complete the assigned task.
-* Rationale: Extracted from team repository instructions in AGENTS.md.
-* Paths: **/*
-* Max blast radius lines: 30
-
-### [team-agents-md-rule-2] (Enforcement: reject_diff)
-* Statement: Never reformat adjacent code, comments, or imports.
 * Rationale: Extracted from team repository instructions in AGENTS.md.
 * Paths: **/*
 * Max blast radius lines: 30
@@ -137,17 +158,24 @@ You must strictly obey these constraints in every proposed patch:
 * Paths: **/*
 * Max blast radius lines: 30
 
+### [ts-clean-imports-004] (Enforcement: warn)
+* Statement: TypeScript modules must use explicit relative or mapped aliases, avoiding circular imports and deep imports into private internal module subpaths.
+* Rationale: Circular and poorly bounded imports cause undefined runtime values, increase bundled bundle size, and degrade tree shaking.
+* Paths: **/*.ts, **/*.tsx
+* Languages: typescript
+* Max blast radius lines: 30
+
 ### [ts-floating-promises-002] (Enforcement: reject_diff)
-* Statement: Async promises must be awaited, returned, or explicitly handled with a catch clause.
-* Rationale: Floating unhandled promises cause silent async failures and unhandled promise rejections.
-* Paths: src/**/*.ts, src/**/*.tsx
+* Statement: Asynchronous promises must be awaited, returned to the caller, or explicitly handled with a .catch() callback or void operator.
+* Rationale: Floating unhandled promises produce unhandled promise rejections, race conditions, and silently dropped async failures.
+* Paths: **/*.ts, **/*.tsx
 * Languages: typescript
 * Max blast radius lines: 30
 
 ### [ts-no-any-001] (Enforcement: reject_diff)
-* Statement: TypeScript variables, parameters, and return types must avoid explicit any and use unknown or generic constraints.
-* Rationale: Any types disable compiler type checking and allow runtime type errors to propagate silently.
-* Paths: src/**/*.ts, src/**/*.tsx
+* Statement: TypeScript variables, parameters, and return types must avoid explicit 'any'; use 'unknown', union types, generic constraints, or explicit interfaces instead.
+* Rationale: The 'any' type disables compiler type checking, concealing potential runtime type errors and eliminating editor refactoring safety.
+* Paths: **/*.ts, **/*.tsx
 * Languages: typescript
 * Max blast radius lines: 30
 <!-- AOS_INVARIANTS_END -->
