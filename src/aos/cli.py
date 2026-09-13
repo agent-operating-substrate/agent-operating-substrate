@@ -440,16 +440,24 @@ def cmd_ingest(args: argparse.Namespace) -> int:
         print(f"Detected frameworks: {', '.join(report.detected_frameworks) or 'none'}")
         print(f"Scanned config files: {', '.join(report.scanned_config_files) or 'none'}")
         print(f"Found instruction files: {', '.join(report.existing_instruction_files) or 'none'}")
+        print(f"Recommended packs: {', '.join(report.recommended_packs) or 'none'}")
         print(f"\nProposed {len(report.synthesized_rules)} invariant rule(s):")
         for r in report.synthesized_rules:
             print(f"- [{r['id']}] {r['statement']}")
         return 0
 
-    report = ingest_repository(root_dir=root, auto_promote=args.promote)
+    install_packs_flag = getattr(args, "install_packs", False)
+    report = ingest_repository(
+        root_dir=root,
+        auto_promote=args.promote,
+        install_recommended_packs=install_packs_flag,
+    )
     status_label = "active" if args.promote else "candidate"
     print(f"Ingested {len(report.synthesized_rules)} rule(s) as {status_label}:")
     for r in report.synthesized_rules:
         print(f"- [{r['id']}] {r['statement']}")
+    if install_packs_flag and report.recommended_packs:
+        print(f"Installed recommended packs: {', '.join(report.recommended_packs)}")
     return 0
 
 
@@ -651,6 +659,7 @@ def build_parser() -> argparse.ArgumentParser:
     # aos ingest
     p_ingest = subparsers.add_parser("ingest", help="Scan repository conventions and synthesize tailored guardrails.")
     p_ingest.add_argument("--promote", action="store_true", help="Immediately promote synthesized rules to active status.")
+    p_ingest.add_argument("--install-packs", action="store_true", help="Automatically install stack-recommended rule packs.")
     p_ingest.add_argument("--dry-run", action="store_true", help="Scan and display proposed rules without saving.")
     p_ingest.set_defaults(func=cmd_ingest)
 
