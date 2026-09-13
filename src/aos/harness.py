@@ -185,3 +185,52 @@ def sync_harnesses(
             updated[name] = target_path
 
     return updated
+
+
+def detect_configured_harnesses(root_dir: Path | str = ".") -> list[str]:
+    """Detect which AI coding agent harnesses are active or configured in the repository."""
+    root = Path(root_dir)
+    detected: list[str] = []
+
+    if (root / ".cursorrules").is_file():
+        detected.append("cursor")
+    if (root / ".cursor" / "rules" / "aos-invariants.mdc").is_file() or (root / ".cursor" / "rules").is_dir():
+        detected.append("cursor_mdc")
+    elif (root / ".cursor").is_dir() and "cursor" not in detected:
+        detected.append("cursor")
+
+    if (root / "CLAUDE.md").is_file() or (root / ".claude").is_dir() or (root / ".claude.json").is_file():
+        detected.append("claude")
+
+    if (root / ".github" / "copilot-instructions.md").is_file():
+        detected.append("copilot")
+
+    if (root / ".windsurfrules").is_file() or (root / ".windsurf").is_dir():
+        detected.append("windsurf")
+
+    if (root / "GEMINI.md").is_file():
+        detected.append("gemini_root")
+    if (root / ".gemini").is_dir():
+        detected.append("gemini")
+
+    if (root / "CODEX.md").is_file():
+        detected.append("codex_root")
+    if (root / ".openai").is_dir():
+        detected.append("codex")
+
+    if (root / "CONVENTIONS.md").is_file() or any(root.glob(".aider*")):
+        detected.append("aider")
+
+    if (root / ".clinerules").is_file():
+        detected.append("cline")
+
+    if (root / ".roomodes").is_file():
+        detected.append("roo")
+
+    if (root / ".amazonq" / "rules.md").is_file() or (root / ".amazonq").is_dir():
+        detected.append("amazonq")
+
+    if (root / "AGENTS.md").is_file():
+        detected.append("agents")
+
+    return detected

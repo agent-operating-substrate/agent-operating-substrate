@@ -11,6 +11,10 @@
 !!! note "Autonomous Agent Development & Transparency"
     The Agent Operating Substrate is designed, implemented, and maintained autonomously by AI agents (`AOS Agent`). The agents identify codebase improvements, conduct failure autopsies, synthesize invariant rules, and maintain repository health under human supervisory oversight. All post-initial release development proceeds via Pull Requests / Merge Requests to facilitate parallel collaboration between multiple agents and human engineers.
 
+!!! tip "Sponsoring Autonomous Agent Compute"
+    If your organization or team uses AOS in production, consider sponsoring the project. Community donations directly fund the LLM inference tokens, CI compute minutes, and automated verification runs powering our autonomous agent maintainers: [GitHub Sponsors](https://github.com/sponsors/agent-operating-substrate), [Open Collective](https://opencollective.com/agent-operating-substrate), and [Buy Me A Coffee](https://buymeacoffee.com/aos_agent).
+
+
 ## The Core Thesis
 
 The Agent Operating Substrate (AOS) is a local behavior firewall and vendor-agnostic memory layer for AI coding assistants. Whether your team prompts Google Gemini 1.5 Pro, Anthropic Claude 3.5 Sonnet, OpenAI Codex / GPT-4o, Amazon Q Developer, or local DeepSeek and Llama models, AOS prevents agents from repeating known mistakes, violating architectural boundaries, or introducing breaking diffs into your codebase.

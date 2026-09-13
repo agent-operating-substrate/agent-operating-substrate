@@ -10,7 +10,12 @@ from aos.engine import RuleEngine
 from aos.enforcer import Violation, check_file_violations, enforce_all
 from aos.executor import execute_and_autopsy
 from aos.fleet import list_fleet_rules, publish_to_fleet, sync_from_fleet
-from aos.harness import format_rules_for_prompt, inject_into_file, sync_harnesses
+from aos.harness import (
+    detect_configured_harnesses,
+    format_rules_for_prompt,
+    inject_into_file,
+    sync_harnesses,
+)
 from aos.hook import install_git_hook, run_pre_commit_check, uninstall_git_hook
 from aos.matcher import infer_language, match_path, match_rule
 from aos.mcp import run_mcp_server
@@ -42,6 +47,7 @@ __all__ = [
     "format_rules_for_prompt",
     "inject_into_file",
     "sync_harnesses",
+    "detect_configured_harnesses",
     "Violation",
     "check_file_violations",
     "enforce_all",

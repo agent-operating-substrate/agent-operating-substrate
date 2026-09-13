@@ -82,9 +82,10 @@ def check_stream_violations(
     en_dash_char = chr(8211)
 
     secret_regexes = [
-        re.compile(r"""(?i)(api[_-]?key|secret|password|auth_token)\s*[:=]\s*["'][A-Za-z0-9_\-]{6,}["']"""),
+        re.compile(r"""(?i)(api[_-]?key|secret|password|auth_token|aws_access_key_id)\s*[:=]\s*["'][A-Za-z0-9_\-/+=]{6,}["']"""),
         re.compile(r"""ghp_[A-Za-z0-9]{30,}"""),
         re.compile(r"""sk-[A-Za-z0-9]{20,}"""),
+        re.compile(r"""AKIA[0-9A-Z]{16}"""),
         re.compile(r"""-----BEGIN (?:RSA |EC )?PRIVATE KEY-----"""),
     ] if secret_rules else []
 

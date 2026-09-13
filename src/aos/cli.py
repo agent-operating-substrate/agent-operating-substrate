@@ -26,7 +26,7 @@ from aos.fleet import (
     publish_to_fleet,
     sync_from_fleet,
 )
-from aos.harness import sync_harnesses
+from aos.harness import START_MARKER, detect_configured_harnesses, sync_harnesses
 from aos.hook import install_git_hook, run_pre_commit_check, uninstall_git_hook
 from aos.mcp import run_mcp_server
 from aos.mesh import simulate_mesh_cycle
@@ -46,7 +46,7 @@ daemon:
 
 
 def cmd_init(args: argparse.Namespace) -> int:
-    """Initialize substrate directory layout and default configuration."""
+    """Initialize substrate directory layout, install packs, and sync agent harnesses."""
     root = Path(args.root)
     dirs = [
         root / ".agents" / "substrate" / "active",
@@ -61,21 +61,252 @@ def cmd_init(args: argparse.Namespace) -> int:
     config_path = root / ".agents" / "config.yaml"
     if not config_path.exists():
         config_path.write_text(DEFAULT_CONFIG_YAML, encoding="utf-8")
-        print(f"Created config: {config_path}")
 
     event_log = root / ".agents" / "blackboard" / "events.jsonl"
     if not event_log.exists():
         event_log.touch()
-        print(f"Created event stream: {event_log}")
 
-    if not getattr(args, "bare", False):
+    is_bare = getattr(args, "bare", False)
+    installed_packs: list[str] = []
+    detected_stack_parts: list[str] = []
+    synced_harnesses: dict[str, Path] = {}
+    hook_status = "Skipped (--bare mode)" if is_bare else "Skipped (no .git directory)"
+
+    if not is_bare:
+        # 1. Ingest existing team guidelines if prompt files exist
+        prompt_candidates = [
+            ".cursorrules",
+            "CLAUDE.md",
+            "AGENTS.md",
+            ".windsurfrules",
+            "CONTRIBUTING.md",
+            ".github/copilot-instructions.md",
+            "GEMINI.md",
+            "CODEX.md",
+            "CONVENTIONS.md",
+            ".clinerules",
+            ".roomodes",
+        ]
+        has_prompts = any((root / p).is_file() for p in prompt_candidates)
+        if has_prompts:
+            from aos.ingest import ingest_repository_conventions
+            ingest_repository_conventions(root_dir=root, auto_promote=True)
+
+        # 2. Detect repository language/frameworks via recommend_packs()
         recommended = recommend_packs(root_dir=root)
         for p in recommended:
             install_pack(p, root_dir=root, promote=True)
-        print(f"Installed recommended rule packs: {', '.join(recommended)}")
+            installed_packs.append(p)
 
-    print("Substrate initialized under .agents/")
+        if "python-core" in recommended:
+            detected_stack_parts.append("Python")
+        if "typescript-core" in recommended:
+            detected_stack_parts.append("TypeScript")
+        if "rust-core" in recommended:
+            detected_stack_parts.append("Rust")
+        if "go-core" in recommended:
+            detected_stack_parts.append("Go")
+
+        try:
+            from aos.ingest import scan_repository_conventions
+            rep = scan_repository_conventions(root_dir=root)
+            for lang in rep.detected_languages:
+                detected_stack_parts.append(lang.title())
+            for fw in rep.detected_frameworks:
+                detected_stack_parts.append(fw.title())
+        except Exception:
+            pass
+
+        # 3. Automatically project invariants into all detected harnesses via sync_harnesses()
+        detected_harnesses = detect_configured_harnesses(root_dir=root)
+        to_sync = list(dict.fromkeys(detected_harnesses + ["agents", "cursor", "claude"]))
+        synced_harnesses = sync_harnesses(root_dir=root, harnesses=to_sync)
+
+        # 4. If a .git directory exists and not --bare, automatically install the git pre-commit hook
+        git_dir = root / ".git"
+        if git_dir.is_dir():
+            try:
+                install_git_hook(root_dir=root)
+                hook_status = "Installed (.git/hooks/pre-commit) [Active]"
+            except Exception as exc:
+                hook_status = f"Failed to install ({exc})"
+
+    engine = RuleEngine(root_dir=root)
+    active_count = len(engine.get_rules(status="active"))
+
+    stack_display = ", ".join(dict.fromkeys(detected_stack_parts)) if detected_stack_parts else "Generic / Language-Agnostic"
+    if is_bare:
+        packs_display = "None (--bare mode)"
+    else:
+        packs_display = f"{', '.join(installed_packs) if installed_packs else 'None'} ({active_count} active invariants)"
+
+    name_labels = {
+        "cursor": "Cursor (.cursorrules)",
+        "cursor_mdc": "Cursor (.cursor/rules)",
+        "claude": "Claude Code (CLAUDE.md)",
+        "copilot": "GitHub Copilot (.github/copilot-instructions.md)",
+        "windsurf": "Windsurf (.windsurfrules)",
+        "gemini": "Gemini (.gemini/instructions.md)",
+        "gemini_root": "Gemini (GEMINI.md)",
+        "codex": "OpenAI Codex (.openai/instructions.md)",
+        "codex_root": "OpenAI Codex (CODEX.md)",
+        "aider": "Aider (CONVENTIONS.md)",
+        "cline": "Cline (.clinerules)",
+        "roo": "Roo Code (.roomodes)",
+        "amazonq": "Amazon Q (.amazonq/rules.md)",
+        "agents": "Universal Agents (AGENTS.md)",
+    }
+    tools_list = [name_labels.get(h, h) for h in synced_harnesses.keys()]
+    tools_display = ", ".join(tools_list) if tools_list else "None"
+
+    print("=" * 70)
+    print("           Agent Operating Substrate (AOS) Initialized")
+    print("=" * 70)
+    print(f"  Detected Stack:      {stack_display}")
+    print(f"  Installed Packs:     {packs_display}")
+    print(f"  Connected AI Tools:  {tools_display}")
+    print(f"  Pre-Commit Hook:     {hook_status}")
+    print("-" * 70)
+    print("  Next Steps:")
+    print("    - Run 'aos status' (or 'aos doctor') to verify guardrails")
+    print("    - Run 'aos ui' to launch the visualizer dashboard")
+    print("=" * 70)
     return 0
+
+
+def cmd_status(args: argparse.Namespace) -> int:
+    """Inspect substrate health, rule counts, harness synchronization, and incident status."""
+    root = Path(args.root)
+    agents_dir = root / ".agents"
+    config_file = agents_dir / "config.yaml"
+    event_file = agents_dir / "blackboard" / "events.jsonl"
+
+    print("=" * 70)
+    print("                 Agent Operating Substrate (AOS) Status")
+    print("=" * 70)
+
+    # 1. Check Substrate Core Status
+    print("\n[Substrate Core]")
+    if not agents_dir.is_dir():
+        print("  Status:            [OFF] Substrate not initialized (.agents/ missing)")
+        print("  Active Invariants: [OFF] 0 active rules")
+        print("  Candidate Rules:   [OFF] 0 candidate rules")
+        print("  Archived Rules:    [OFF] 0 archived rules")
+        print("\n" + "=" * 70)
+        print("Overall Health: [OFF] Substrate not initialized. Run 'aos init' to set up.")
+        print("=" * 70)
+        return 1
+
+    print("  Status:            [OK] Initialized (.agents/)")
+    if config_file.is_file():
+        print("  Configuration:     [OK] .agents/config.yaml")
+    else:
+        print("  Configuration:     [WARN] .agents/config.yaml missing")
+
+    engine = RuleEngine(root_dir=root)
+    active_rules = engine.get_rules(status="active")
+    candidate_rules = engine.get_rules(status="candidate")
+    archive_rules = engine.get_rules(status="archive")
+
+    if active_rules:
+        print(f"  Active Invariants: [OK] {len(active_rules)} active rules")
+    else:
+        print("  Active Invariants: [WARN] 0 active rules (run 'aos pack install <pack>')")
+
+    print(f"  Candidate Rules:   [OK] {len(candidate_rules)} candidate rules")
+    print(f"  Archived Rules:    [OK] {len(archive_rules)} archived rules")
+
+    # 2. Check AI Harnesses Status
+    print("\n[AI Agent Harnesses]")
+    harness_checks: list[tuple[str, list[Path]]] = [
+        ("Universal Agents", [root / "AGENTS.md"]),
+        ("Claude Code", [root / "CLAUDE.md"]),
+        ("Cursor", [root / ".cursorrules", root / ".cursor" / "rules" / "aos-invariants.mdc"]),
+        ("GitHub Copilot", [root / ".github" / "copilot-instructions.md"]),
+        ("Windsurf", [root / ".windsurfrules"]),
+        ("Gemini", [root / "GEMINI.md", root / ".gemini" / "instructions.md"]),
+        ("OpenAI Codex", [root / "CODEX.md", root / ".openai" / "instructions.md"]),
+        ("Aider", [root / "CONVENTIONS.md"]),
+        ("Cline", [root / ".clinerules"]),
+        ("Roo Code", [root / ".roomodes"]),
+        ("Amazon Q", [root / ".amazonq" / "rules.md"]),
+    ]
+
+    for tool_name, check_paths in harness_checks:
+        found_path: Path | None = None
+        for p in check_paths:
+            if p.is_file():
+                found_path = p
+                break
+
+        if found_path is not None:
+            rel = found_path.relative_to(root)
+            content = found_path.read_text(encoding="utf-8", errors="ignore")
+            if START_MARKER in content:
+                print(f"  {tool_name:18}: [OK] Synced ({rel})")
+            else:
+                print(f"  {tool_name:18}: [WARN] Present but not synced ({rel}; run 'aos sync')")
+        else:
+            first_rel = check_paths[0].relative_to(root)
+            print(f"  {tool_name:18}: [OFF] Not configured ({first_rel})")
+
+    # 3. Check Git Pre-Commit Hook Status
+    print("\n[Git Integrity Barrier]")
+    git_dir = root / ".git"
+    hook_ok = False
+    if git_dir.is_dir():
+        print("  Git Repository:    [OK] Present (.git/)")
+        hook_path = git_dir / "hooks" / "pre-commit"
+        if hook_path.is_file():
+            content = hook_path.read_text(encoding="utf-8", errors="ignore")
+            if "aos hook run" in content or "aos" in content:
+                print("  Pre-Commit Hook:   [OK] Installed and active (.git/hooks/pre-commit)")
+                hook_ok = True
+            else:
+                print("  Pre-Commit Hook:   [WARN] Hook present without AOS guard (.git/hooks/pre-commit)")
+        else:
+            print("  Pre-Commit Hook:   [WARN] Not installed (run 'aos hook install')")
+    else:
+        print("  Git Repository:    [OFF] Not a git repository")
+        print("  Pre-Commit Hook:   [OFF] N/A (no .git directory)")
+
+    # 4. Check Blackboard Incidents
+    print("\n[Blackboard & Incidents]")
+    events = read_events(root_dir=root)
+    if event_file.is_file():
+        print(f"  Event Stream:      [OK] {event_file.relative_to(root)} ({len(events)} events)")
+    else:
+        print("  Event Stream:      [WARN] Event log missing")
+
+    incident_types = {"PRE_COMMIT_BLOCKED", "AUTOPSY_RECORD", "ENFORCEMENT_VIOLATION"}
+    incidents = [e for e in events if e.type in incident_types]
+    if incidents:
+        print(f"  Recent Incidents:  [WARN] {len(incidents)} barrier incident(s) recorded:")
+        for ev in list(reversed(incidents))[:5]:
+            p = ev.payload or {}
+            rid = p.get("rule_id", "unknown")
+            loc = p.get("file_path", "")
+            loc_str = f" in {loc}" if loc else ""
+            msg = p.get("message") or p.get("statement") or ""
+            msg_snippet = f": {msg}" if msg else ""
+            print(f"    * [{ev.timestamp}] {ev.type}: {rid}{loc_str}{msg_snippet}")
+    else:
+        print("  Recent Incidents:  [OK] 0 barrier incidents recorded")
+
+    print("\n" + "=" * 70)
+    if active_rules and (hook_ok or not git_dir.is_dir()):
+        print("Overall Health: [OK] Substrate operational and guardrails active.")
+    elif not active_rules:
+        print("Overall Health: [WARN] No active rules installed (run 'aos pack install <pack>').")
+    else:
+        print("Overall Health: [WARN] Git pre-commit barrier not active (run 'aos hook install').")
+    print("=" * 70)
+    return 0
+
+
+def cmd_doctor(args: argparse.Namespace) -> int:
+    """Run diagnostic health check on substrate and agent environment."""
+    return cmd_status(args)
 
 
 def cmd_rules_list(args: argparse.Namespace) -> int:
@@ -550,8 +781,19 @@ def build_parser() -> argparse.ArgumentParser:
 
     # aos init
     p_init = subparsers.add_parser("init", help="Initialize .agents/ substrate in target repository.")
+    p_init.add_argument("--root", default=argparse.SUPPRESS, help="Repository root directory.")
     p_init.add_argument("--bare", action="store_true", help="Initialize empty substrate without installing default packs.")
     p_init.set_defaults(func=cmd_init)
+
+    # aos status
+    p_status = subparsers.add_parser("status", help="Inspect substrate health, rule counts, and harness status.")
+    p_status.add_argument("--root", default=argparse.SUPPRESS, help="Repository root directory.")
+    p_status.set_defaults(func=cmd_status)
+
+    # aos doctor
+    p_doctor = subparsers.add_parser("doctor", help="Run diagnostic health check on substrate and agent environment.")
+    p_doctor.add_argument("--root", default=argparse.SUPPRESS, help="Repository root directory.")
+    p_doctor.set_defaults(func=cmd_doctor)
 
     # aos rules
     p_rules = subparsers.add_parser("rules", help="Manage and inspect substrate invariant rules.")
