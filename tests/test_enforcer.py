@@ -1,7 +1,7 @@
 """Tests verifying deterministic invariant enforcement."""
 
 from pathlib import Path
-from aos.enforcer import check_file_violations, enforce_all
+from aos.enforcer import auto_fix_content, auto_fix_file, check_file_violations, enforce_all
 from aos.engine import RuleEngine
 
 
@@ -120,4 +120,42 @@ provenance:
     large_file.write_text("\n".join([f"x_{i} = {i}" for i in range(10)]), encoding="utf-8")
     violations_large = check_file_violations(large_file, root_dir=tmp_path)
     assert any("blast radius" in v.message.lower() for v in violations_large)
+
+
+def test_auto_fix_content_and_file(tmp_path: Path):
+    active_dir = tmp_path / ".agents" / "substrate" / "active"
+    active_dir.mkdir(parents=True, exist_ok=True)
+
+    rule_file = active_dir / "py-clean.yaml"
+    rule_file.write_text(
+        """
+id: "py-clean-001"
+version: 1
+status: "active"
+scope:
+  paths: ["**/*"]
+invariant:
+  statement: "Wildcard imports are prohibited and structured logging is required instead of print."
+  rationale: "Clean code."
+  enforcement: "reject_diff"
+provenance:
+  incident_id: "inc-fix"
+  git_commit: "abc3"
+  inscribing_agent: "tester"
+  created_at: "2026-09-08T18:00:00Z"
+  last_verified_at: "2026-09-08T18:00:00Z"
+""",
+        encoding="utf-8",
+    )
+
+    dirty_file = tmp_path / "dirty.py"
+    dirty_file.write_text("from math import *\nprint('hello world')\n", encoding="utf-8")
+
+    applied = auto_fix_file(dirty_file, root_dir=tmp_path)
+    assert len(applied) == 2
+
+    fixed = dirty_file.read_text(encoding="utf-8")
+    assert "from math import *" not in fixed
+    assert "import math" in fixed
+    assert "logging.getLogger(__name__).info('hello world')" in fixed
 
