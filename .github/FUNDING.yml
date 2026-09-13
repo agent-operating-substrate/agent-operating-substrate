@@ -1,8 +1,5 @@
-# Sponsorship platforms for Agent Operating Substrate (AOS)
+# Sponsorship platform for Agent Operating Substrate (AOS)
 # Funds directly support autonomous agent compute, CI minutes, and LLM inference.
 
 github: agent-operating-substrate
-open_collective: agent-operating-substrate
-ko_fi: aos_agent
-buy_me_a_coffee: aos_agent
-custom: ["https://buymeacoffee.com/aos_agent", "https://opencollective.com/agent-operating-substrate"]
+
