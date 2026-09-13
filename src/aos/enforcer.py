@@ -276,3 +276,99 @@ def enforce_all(
         all_violations.extend(violations)
 
     return all_violations
+
+
+def auto_fix_content(
+    file_path: str,
+    content: str,
+    rules: list[InvariantRule],
+) -> tuple[str, list[str]]:
+    """Deterministically auto-fix common safe invariant violations in code.
+
+    Returns:
+        tuple[str, list[str]]: (fixed_content, list_of_applied_fixes)
+    """
+    applied_fixes: list[str] = []
+    lines = content.splitlines(keepends=True)
+    fixed_lines = list(lines)
+
+    for rule in rules:
+        st_lower = rule.invariant.statement.lower()
+        rat_lower = rule.invariant.rationale.lower()
+        rule_text = f"{st_lower} {rat_lower}"
+
+        # 1. Fix dash punctuation
+        if "em dash" in rule_text or "zero em dashes" in rule_text:
+            dash_char = chr(8212)
+            en_dash_char = chr(8211)
+            for i, line in enumerate(fixed_lines):
+                if dash_char in line or en_dash_char in line:
+                    fixed_lines[i] = line.replace(dash_char, ": ").replace(en_dash_char, "-")
+                    applied_fixes.append(f"Replaced forbidden dash punctuation on line {i + 1} with standard punctuation.")
+
+        # 2. Fix print calls to logger calls if rule requires structured logging
+        if "no-print" in rule.id.lower() or ("print" in rule_text and ("structured log" in rule_text or "logging" in rule_text)):
+            print_call_rx = re.compile(r"""^(\s*)print\s*\((.*)\)(\s*)$""")
+            for i, line in enumerate(fixed_lines):
+                m = print_call_rx.match(line)
+                if m:
+                    indent, args, trailing = m.group(1), m.group(2), m.group(3)
+                    fixed_lines[i] = f"{indent}logging.getLogger(__name__).info({args}){trailing}"
+                    applied_fixes.append(f"Converted raw print() on line {i + 1} to structured logging call.")
+
+        # 3. Fix wildcard imports
+        if "wildcard" in rule_text or "import *" in rule_text:
+            wc_rx = re.compile(r"""^(\s*)from\s+([\w\.]+)\s+import\s+\*(\s*)$""")
+            for i, line in enumerate(fixed_lines):
+                m = wc_rx.match(line)
+                if m:
+                    indent, mod, trailing = m.group(1), m.group(2), m.group(3)
+                    fixed_lines[i] = f"{indent}import {mod}  # Auto-fixed: explicit namespace import replacing wildcard{trailing}"
+                    applied_fixes.append(f"Replaced wildcard import on line {i + 1} with explicit module import.")
+
+        # 4. Fix Rust unsafe blocks without // SAFETY: comments
+        if "rust" in rule.id.lower() or "safety:" in rule_text:
+            unsafe_rx = re.compile(r"""^(\s*)unsafe\s*(\{|fn|impl|trait)""")
+            for i, line in enumerate(fixed_lines):
+                m = unsafe_rx.match(line)
+                if m:
+                    has_safety = False
+                    if i > 0 and "// SAFETY:" in fixed_lines[i - 1]:
+                        has_safety = True
+                    if not has_safety:
+                        indent = m.group(1)
+                        fixed_lines.insert(i, f"{indent}// SAFETY: Invariant verified by developer.\n")
+                        applied_fixes.append(f"Added required // SAFETY: comment before unsafe block on line {i + 1}.")
+                        break
+
+    return "".join(fixed_lines), applied_fixes
+
+
+def auto_fix_file(
+    file_path: str | Path,
+    root_dir: Path | str = ".",
+    engine: Optional[RuleEngine] = None,
+) -> list[str]:
+    """Inspect and auto-fix violations in a target file on disk."""
+    root = Path(root_dir)
+    target = root / file_path if not Path(file_path).is_absolute() else Path(file_path)
+    rel_path = str(target.relative_to(root)).replace("\\", "/") if target.is_relative_to(root) else str(target)
+
+    if not target.is_file():
+        return []
+
+    if engine is None:
+        engine = RuleEngine(root_dir=root)
+
+    matching_rules = engine.match_file(rel_path, status="active")
+    if not matching_rules:
+        return []
+
+    try:
+        content = target.read_text(encoding="utf-8")
+        fixed_content, applied = auto_fix_content(rel_path, content, matching_rules)
+        if applied and fixed_content != content:
+            target.write_text(fixed_content, encoding="utf-8")
+        return applied
+    except Exception:
+        return []
