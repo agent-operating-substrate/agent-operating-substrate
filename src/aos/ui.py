@@ -3054,6 +3054,18 @@ class DashboardRequestHandler(BaseHTTPRequestHandler):
             from aos.ingest import scan_repository_conventions
             report = scan_repository_conventions(self.root_dir)
             self._send_json(report.to_dict())
+        elif path == "/api/identities":
+            from aos.identity import list_identities
+            identities = list_identities(root_dir=self.root_dir)
+            self._send_json(identities)
+        elif path == "/api/identities/messages":
+            from aos.identity import fetch_agent_messages
+            persona = query.get("persona", [""])[0]
+            try:
+                msgs = fetch_agent_messages(persona_or_address=persona, root_dir=self.root_dir) if persona else []
+                self._send_json({"persona": persona, "messages": msgs, "count": len(msgs)})
+            except Exception as exc:
+                self._send_json({"error": str(exc), "messages": [], "count": 0}, status_code=400)
         else:
             self.send_response(404)
             self.end_headers()
@@ -3129,6 +3141,14 @@ class DashboardRequestHandler(BaseHTTPRequestHandler):
             try:
                 removed = uninstall_ci_workflow(root_dir=self.root_dir)
                 self._send_json({"success": True, "removed": removed})
+            except Exception as exc:
+                self._send_json({"success": False, "error": str(exc)}, status_code=500)
+        elif path == "/api/identities/create":
+            from aos.identity import create_agent_account
+            persona = payload.get("persona", "maintainer")
+            try:
+                ident = create_agent_account(persona=persona, root_dir=self.root_dir)
+                self._send_json({"success": True, "identity": ident})
             except Exception as exc:
                 self._send_json({"success": False, "error": str(exc)}, status_code=500)
         elif path == "/api/check":
