@@ -2,12 +2,12 @@
   "name": "aos-guardrails",
   "displayName": "Agent Operating Substrate (AOS)",
   "description": "Autonomous behavior control plane, guardrail synchronization, and permanent memory for Cursor and Copilot",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "aos-agent",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/aos-agent/agent-operating-substrate"
+    "url": "https://github.com/agent-operating-substrate/agent-operating-substrate"
   },
   "engines": {
     "vscode": "^1.80.0"

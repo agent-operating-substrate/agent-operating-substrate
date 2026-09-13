@@ -22,6 +22,13 @@ except ImportError:
     HAS_PLAYWRIGHT = False
 
 
+def _launch_browser(p):
+    try:
+        return p.chromium.launch()
+    except Exception as exc:
+        pytest.skip(f"Playwright browser binary not available: {exc}")
+
+
 @pytest.fixture
 def test_env(tmp_path: Path) -> Path:
     """Create isolated substrate environment for UI testing."""
@@ -539,7 +546,7 @@ def test_playwright_e2e_rendering_and_tabs(test_server: str):
 
     errors: list[str] = []
     with sync_playwright() as p:
-        browser = p.chromium.launch()
+        browser = _launch_browser(p)
         page = browser.new_page()
         page.on("pageerror", lambda err: errors.append(f"PAGE: {err}"))
         page.on("console", lambda msg: errors.append(f"CONSOLE: {msg.text}") if msg.type == "error" else None)
@@ -565,7 +572,7 @@ def test_playwright_e2e_interactive_flows(test_server: str):
 
     errors: list[str] = []
     with sync_playwright() as p:
-        browser = p.chromium.launch()
+        browser = _launch_browser(p)
         page = browser.new_page()
         page.on("pageerror", lambda err: errors.append(f"PAGE: {err}"))
         page.on("console", lambda msg: errors.append(f"CONSOLE: {msg.text}") if msg.type == "error" else None)
@@ -613,7 +620,7 @@ def test_playwright_e2e_ingest_modal(test_server: str):
 
     errors: list[str] = []
     with sync_playwright() as p:
-        browser = p.chromium.launch()
+        browser = _launch_browser(p)
         page = browser.new_page()
         page.on("pageerror", lambda err: errors.append(f"PAGE: {err}"))
         page.on("console", lambda msg: errors.append(f"CONSOLE: {msg.text}") if msg.type == "error" else None)
