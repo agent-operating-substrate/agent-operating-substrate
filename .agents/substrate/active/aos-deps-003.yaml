@@ -1,0 +1,25 @@
+id: aos-deps-003
+version: 1
+status: active
+scope:
+  paths:
+  - pyproject.toml
+  - src/**
+  languages:
+  - python
+invariant:
+  statement: Build with minimal code. Avoid speculative abstractions. Favor local
+    file primitives (JSON, YAML, SQLite) over complex external infrastructure. Do
+    not introduce dependencies unless strictly necessary.
+  rationale: Constraint specified in AGENTS.md Rule 3 and README.md zero external
+    dependency principle.
+  enforcement: reject_diff
+  max_blast_radius_lines: 30
+provenance:
+  incident_id: inc-bootstrap-deps-003
+  git_commit: 912979e
+  inscribing_agent: antigravity-aos-bootstrap
+  peer_consensus_agent: rule-curator-v1
+  created_at: '2026-09-08T19:15:00Z'
+  last_verified_at: '2026-09-08T17:59:51Z'
+  trigger_count: 0

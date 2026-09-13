@@ -1,0 +1,9 @@
+version: 1
+substrate:
+  path: ".agents/substrate"
+  auto_archive_days: 90
+blackboard:
+  path: ".agents/blackboard"
+  event_log: ".agents/blackboard/events.jsonl"
+daemon:
+  poll_interval_seconds: 5
