@@ -1,0 +1,23 @@
+id: py-type-annotations-004
+version: 1
+status: active
+scope:
+  paths:
+  - src/**
+  languages:
+  - python
+invariant:
+  statement: Public functions, methods, and classes must provide explicit parameter
+    and return type annotations.
+  rationale: Static typing prevents runtime errors and provides clear machine-readable
+    contracts for AI coding agents.
+  enforcement: warn
+  max_blast_radius_lines: 30
+provenance:
+  incident_id: pack-python-clean-architecture
+  git_commit: HEAD
+  inscribing_agent: pack-installer
+  created_at: '2026-09-13T06:36:31Z'
+  last_verified_at: '2026-09-13T06:36:31Z'
+  trigger_count: 1
+  peer_consensus_agent: pack-curator
