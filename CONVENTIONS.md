@@ -207,9 +207,9 @@ Aider pairing assistant conventions: strictly adhere to the following machine-en
 ## Proactive Guardrail Memory: Recent Interceptions
 The following failure modes were recently intercepted by repository barriers.
 Ensure your implementation proactively avoids these exact patterns:
-* Intercepted [team-agents-md-rule-3] in tests/test_ui.py: Violation of 'team-agents-md-rule-3': Content exceeds maximum blast radius of 30 lines (689 lines detected).
-* Intercepted [team-agents-md-rule-1] in tests/test_ui.py: Violation of 'team-agents-md-rule-1': Content exceeds maximum blast radius of 30 lines (689 lines detected).
-* Intercepted [sec-ssrf-prevention-001] in tests/test_ui.py: Violation of 'sec-ssrf-prevention-001': Content exceeds maximum blast radius of 30 lines (689 lines detected).
-* Intercepted [sec-sql-injection-001] in tests/test_ui.py: Violation of 'sec-sql-injection-001': Content exceeds maximum blast radius of 30 lines (689 lines detected).
-* Intercepted [sec-safe-deserialization-001] in tests/test_ui.py: Violation of 'sec-safe-deserialization-001': Content exceeds maximum blast radius of 30 lines (689 lines detected).
+* Intercepted [fastapi-pydantic-001] in src/aos/matcher.py: Violation of 'fastapi-pydantic-001': Content exceeds maximum blast radius of 30 lines (152 lines detected).
+* Intercepted [team-agents-md-rule-3] in src/aos/matcher.py: Violation of 'team-agents-md-rule-3': Content exceeds maximum blast radius of 30 lines (152 lines detected).
+* Intercepted [team-agents-md-rule-1] in src/aos/matcher.py: Violation of 'team-agents-md-rule-1': Content exceeds maximum blast radius of 30 lines (152 lines detected).
+* Intercepted [sec-ssrf-prevention-001] in src/aos/matcher.py: Violation of 'sec-ssrf-prevention-001': Content exceeds maximum blast radius of 30 lines (152 lines detected).
+* Intercepted [sec-sql-injection-001] in src/aos/matcher.py: Violation of 'sec-sql-injection-001': Content exceeds maximum blast radius of 30 lines (152 lines detected).
 <!-- AOS_INVARIANTS_END -->
