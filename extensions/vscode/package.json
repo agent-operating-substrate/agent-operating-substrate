@@ -1,0 +1,59 @@
+{
+  "name": "aos-guardrails",
+  "displayName": "Agent Operating Substrate (AOS)",
+  "description": "Autonomous behavior control plane, guardrail synchronization, and permanent memory for Cursor and Copilot",
+  "version": "0.1.0",
+  "publisher": "aos-agent",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters",
+    "Testing"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "aos.syncHarnesses",
+        "title": "AOS: Sync Guardrails to AI Harnesses",
+        "category": "AOS"
+      },
+      {
+        "command": "aos.scanCodebase",
+        "title": "AOS: Scan Codebase for Tailored Invariants",
+        "category": "AOS"
+      },
+      {
+        "command": "aos.checkCurrentFile",
+        "title": "AOS: Inspect Active Guardrails for Current File",
+        "category": "AOS"
+      },
+      {
+        "command": "aos.openControlPlane",
+        "title": "AOS: Open Control Plane Dashboard",
+        "category": "AOS"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "aos.syncHarnesses"
+        },
+        {
+          "command": "aos.scanCodebase"
+        },
+        {
+          "command": "aos.checkCurrentFile"
+        },
+        {
+          "command": "aos.openControlPlane"
+        }
+      ]
+    }
+  }
+}
