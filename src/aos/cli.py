@@ -8,7 +8,12 @@ from pathlib import Path
 
 from aos.autopsy import inscribe_candidate, promote_candidate, synthesize_candidate_rule
 from aos.blackboard import post_event, read_events
-from aos.ci import review_pr_diff, run_ci_check
+from aos.ci import (
+    install_ci_workflow,
+    review_pr_diff,
+    run_ci_check,
+    uninstall_ci_workflow,
+)
 from aos.curator import curate_substrate
 from aos.daemon import SubstrateDaemon
 from aos.engine import RuleEngine
@@ -258,6 +263,24 @@ def cmd_ci_review(args: argparse.Namespace) -> int:
     for c in result["comments"]:
         print(f"- {c['file_path']}:{c['line_number']} [{c['rule_id']}]: {c['message']}")
     return 0 if result["status"] == "approved" else 1
+
+
+def cmd_ci_install(args: argparse.Namespace) -> int:
+    """Install GitHub Actions invariant verification workflow."""
+    wf_path = install_ci_workflow(root_dir=args.root)
+    print(f"Installed GitHub Actions workflow: {wf_path}")
+    return 0
+
+
+def cmd_ci_uninstall(args: argparse.Namespace) -> int:
+    """Remove GitHub Actions invariant verification workflow."""
+    removed = uninstall_ci_workflow(root_dir=args.root)
+    if removed:
+        print("Uninstalled GitHub Actions workflow.")
+    else:
+        print("No GitHub Actions workflow found to uninstall.")
+    return 0
+
 
 
 def cmd_fleet_list(args: argparse.Namespace) -> int:
@@ -573,6 +596,12 @@ def build_parser() -> argparse.ArgumentParser:
     p_ci_rev = ci_sub.add_parser("review", help="Review pull request diff and generate inline comments.")
     p_ci_rev.add_argument("--diff", help="Path to unified diff file (reads from stdin if omitted).")
     p_ci_rev.set_defaults(func=cmd_ci_review)
+
+    p_ci_inst = ci_sub.add_parser("install", help="Install GitHub Actions guardrail workflow.")
+    p_ci_inst.set_defaults(func=cmd_ci_install)
+
+    p_ci_uninst = ci_sub.add_parser("uninstall", help="Remove GitHub Actions guardrail workflow.")
+    p_ci_uninst.set_defaults(func=cmd_ci_uninstall)
 
     # aos fleet
     p_fleet = subparsers.add_parser("fleet", help="Enterprise cross-repository fleet invariant mesh.")

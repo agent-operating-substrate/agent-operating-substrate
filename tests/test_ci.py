@@ -65,3 +65,33 @@ def test_review_pr_diff(tmp_path: Path):
     assert result["comments_count"] >= 1
     assert any("py-no-wildcard-import-002" in c["rule_id"] for c in result["comments"])
     assert any("Compliant Pattern" in c["comment_body"] for c in result["comments"])
+
+
+def test_ci_workflow_lifecycle(tmp_path: Path):
+    from aos.ci import install_ci_workflow, uninstall_ci_workflow
+
+    wf_file = install_ci_workflow(root_dir=tmp_path)
+    assert wf_file.is_file()
+    content = wf_file.read_text(encoding="utf-8")
+    assert "AOS Guardrails" in content
+    assert "aos ci run --auto-sync" in content
+
+    # Uninstall removes file
+    assert uninstall_ci_workflow(root_dir=tmp_path) is True
+    assert not wf_file.exists()
+    assert uninstall_ci_workflow(root_dir=tmp_path) is False
+
+
+def test_cli_ci_install_and_uninstall(tmp_path: Path):
+    from aos.cli import main
+
+    ret_inst = main(["--root", str(tmp_path), "ci", "install"])
+    assert ret_inst == 0
+    wf = tmp_path / ".github" / "workflows" / "aos-guardrails.yml"
+    assert wf.is_file()
+
+    ret_uninst = main(["--root", str(tmp_path), "ci", "uninstall"])
+    assert ret_uninst == 0
+    assert not wf.exists()
+
+
