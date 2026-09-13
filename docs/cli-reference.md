@@ -415,7 +415,13 @@ CI/CD integration command for GitHub Actions and GitLab pipelines.
 aos ci run [--base <git-ref>] [--auto-sync] [--files <paths...>]
 ```
 
-### Options
+### Subcommands
+* `aos ci run [--base <git-ref>] [--auto-sync] [--files <paths...>]`: Run invariant checks against modified files.
+* `aos ci review [--diff <path>]`: Analyze unified pull request diff and generate inline review comments with compliant code patterns.
+* `aos ci install`: Install GitHub Actions CI guardrail workflow into `.github/workflows/aos-guardrails.yml`.
+* `aos ci uninstall`: Remove GitHub Actions CI guardrail workflow.
+
+### Options for `aos ci run`
 * `--base <git-ref>`: Base Git reference to diff against (default: `origin/main`).
 * `--auto-sync`: Sync agent prompt harnesses before running verification.
 * `--files <paths...>`: Explicit list of files to check instead of Git diff.
@@ -437,8 +443,9 @@ All modified files strictly comply with active substrate invariants.
 ```
 
 ### Exit Codes
-* `0`: Invariant check passed.
+* `0`: Invariant check or review passed.
 * `1`: Invariant violations detected.
+
 
 ***
 
