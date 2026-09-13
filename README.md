@@ -217,6 +217,36 @@ aos rules check src/
 
 ***
 
+## GitHub Action PR Gatekeeper
+
+Block non-compliant AI agent diffs before merge with sticky review comments and line-level remediation:
+
+```yaml
+name: AOS PR Gatekeeper
+on:
+  pull_request:
+    branches: [ master, main ]
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  gatekeeper:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: agent-operating-substrate/agent-operating-substrate@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          base_ref: ${{ github.base_ref }}
+          fail_on_violation: "true"
+```
+
+Install via CLI: `aos ci install`. Full options: [Gatekeeper Guide](docs/github-action-gatekeeper.md).
+
+***
+
 ## 3 Real-World Proofs
 
 AOS is running right now in production repositories. Here are three machine-enforced proofs executing directly inside this codebase:
@@ -349,6 +379,7 @@ Team A (Origin) ──> Inscribes Rule ──> aos fleet publish
 * [Getting Started Guide](docs/getting-started.md): Step-by-step setup, harness sync, and MCP configuration.
 * [AI Vendor Abstraction](docs/vendor-abstraction.md): Decoupling repository invariants and control planes from LLM model providers.
 * [IDE & Tool Integration](docs/ide-integration.md): Setup Cursor, Claude Code, Copilot, Windsurf, and Git pre-commit hooks.
+* [GitHub Action PR Gatekeeper](docs/github-action-gatekeeper.md): CI/CD pipeline firewall blocking non-compliant agent diffs before merge.
 * [Control Plane Web Dashboard](docs/control-plane-ui.md): Visual tour of real-time guardrail controls, diff testing, and incident autopsies.
 * [Curated Rule Packs](docs/rule-packs.md): Catalog of security, clean architecture, and SIMD performance invariant packs.
 * [Architecture & Theoretical Foundations](docs/architecture.md): The three inscription loops, blackboard event bus, and mathematical model.

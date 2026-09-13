@@ -1,36 +1,46 @@
-name: "Agent Operating Substrate (AOS) Invariant Action"
-description: "Deterministic invariant enforcement, autopsy synthesis, and harness synchronization."
-author: "AOS Core Team"
+name: 'AOS Guardrails Gatekeeper'
+description: 'Deterministic behavior firewall and invariant enforcement for AI-generated code on Pull Requests'
+author: 'AOS Core Team'
 
 inputs:
-  base-ref:
-    description: "Git base reference branch to diff against."
+  github_token:
+    description: 'GitHub token for posting sticky PR comments'
     required: false
-    default: "origin/main"
-  auto-sync:
-    description: "Automatically sync prompt harness configurations."
+    default: '${{ github.token }}'
+  base_ref:
+    description: 'Base git reference to evaluate diff against'
     required: false
-    default: "false"
+    default: '${{ github.base_ref }}'
+  fail_on_violation:
+    description: 'Whether to fail the CI check when violations are detected'
+    required: false
+    default: 'true'
 
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: "3.11"
+        python-version: '3.12'
 
-    - name: Install dependencies
+    - name: Install AOS
       shell: bash
       run: |
         python -m pip install --upgrade pip
-        python -m pip install -e .
+        pip install -e .
 
-    - name: Run AOS Invariant Evaluation
+    - name: Run AOS Gatekeeper
       shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
       run: |
-        SYNC_FLAG=""
-        if [ "${{ inputs.auto-sync }}" = "true" ]; then
-          SYNC_FLAG="--auto-sync"
+        BASE_REF="${{ inputs.base_ref }}"
+        if [ -z "$BASE_REF" ]; then
+          BASE_REF="origin/main"
         fi
-        python -m aos ci run --base "${{ inputs.base-ref }}" $SYNC_FLAG
+        if [ "${{ inputs.fail_on_violation }}" = "false" ]; then
+          python -m aos ci run --auto-sync --comment --base "$BASE_REF" || true
+        else
+          python -m aos ci run --auto-sync --comment --base "$BASE_REF"
+        fi

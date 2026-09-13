@@ -3,6 +3,7 @@
 from __future__ import annotations
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -10,8 +11,10 @@ from aos.autopsy import inscribe_candidate, promote_candidate, synthesize_candid
 from aos.blackboard import post_event, read_events
 from aos.ci import (
     install_ci_workflow,
+    post_pr_comment,
     review_pr_diff,
     run_ci_check,
+    run_gatekeeper,
     uninstall_ci_workflow,
 )
 from aos.curator import curate_substrate
@@ -480,7 +483,14 @@ def cmd_ci_run(args: argparse.Namespace) -> int:
         root_dir=args.root,
     )
     print(report.to_markdown())
+
+    is_gh = os.environ.get("GITHUB_ACTIONS") == "true"
+    is_pr = os.environ.get("GITHUB_EVENT_NAME") in ("pull_request", "pull_request_target")
+    if getattr(args, "comment", False) or (is_gh and is_pr):
+        post_pr_comment(report, pr_number=getattr(args, "pr_number", None), root_dir=args.root)
+
     return 0 if report.status == "passed" else 1
+
 
 
 def cmd_ci_review(args: argparse.Namespace) -> int:
@@ -883,6 +893,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_ci_run = ci_sub.add_parser("run", help="Run CI verification on modified files.")
     p_ci_run.add_argument("--base", default="origin/main", help="Base ref branch.")
     p_ci_run.add_argument("--auto-sync", action="store_true", help="Sync harness files before check.")
+    p_ci_run.add_argument("--comment", action="store_true", help="Post sticky PR comment on GitHub.")
+    p_ci_run.add_argument("--pr-number", type=int, default=None, help="Pull request number for sticky comment.")
     p_ci_run.add_argument("--files", nargs="*", default=None, help="Specific files to evaluate.")
     p_ci_run.set_defaults(func=cmd_ci_run)
 
