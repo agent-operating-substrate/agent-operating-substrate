@@ -409,6 +409,20 @@ def test_api_packs_list_and_install(test_server: str):
     assert status_bad == 400
     assert "error" in resp_bad
 
+    # Uninstall pack
+    status_uninst, resp_uninst = http_post(
+        f"{test_server}/api/packs/uninstall",
+        {"pack_name": "security-core"},
+    )
+    assert status_uninst == 200
+    assert resp_uninst["success"] is True
+    assert resp_uninst["uninstalled_count"] >= 2
+
+    status, rules_after = http_get(f"{test_server}/api/rules?status=active")
+    assert status == 200
+    active_ids_after = [r["id"] for r in rules_after]
+    assert "sec-sql-injection-001" not in active_ids_after
+
 
 def test_api_harnesses_view(test_server: str):
     # Cursor view
@@ -594,6 +608,19 @@ def test_playwright_e2e_ingest_modal(test_server: str):
         browser.close()
 
     assert not errors, f"Browser encountered errors: {errors}"
+
+
+def test_api_fix_content(test_server: str):
+    http_post(f"{test_server}/api/packs/install", {"pack_name": "python-core"})
+    payload = {
+        "file_path": "src/sample.py",
+        "content": "from os import *\n\ndef main():\n    print('Running task')\n",
+    }
+    status, data = http_post(f"{test_server}/api/fix-content", payload)
+    assert status == 200
+    assert "fixed_content" in data
+    assert "from os import *" not in data["fixed_content"]
+    assert "import os" in data["fixed_content"]
 
 
 
