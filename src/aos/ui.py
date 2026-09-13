@@ -1464,7 +1464,10 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                 </div>
               </div>
               <div class="rule-card-footer" style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
-                <button type="button" class="btn btn-sm" onclick="viewRuleYaml('${escapeHtml(r.id)}', event)" style="padding: 3px 8px; font-size: 11px;">View YAML</button>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                  <button type="button" class="btn btn-sm" onclick="viewRuleYaml('${escapeHtml(r.id)}', event)" style="padding: 3px 8px; font-size: 11px;">View YAML</button>
+                  ${r.status === 'candidate' ? `<button type="button" class="btn btn-sm" onclick="promoteRule('${escapeHtml(r.id)}', event)" style="padding: 3px 8px; font-size: 11px; background: #059669; color: #fff;">Promote to Active</button>` : ''}
+                </div>
                 <span class="expand-cue" id="expand-cue-${escapeHtml(r.id)}">${isExpanded ? '▲ Collapse metadata' : '▼ Click to inspect metadata'}</span>
               </div>
             </div>
@@ -1671,9 +1674,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             ? '<span class="badge badge-active">CONNECTED</span>'
             : '<span class="badge badge-archive">MISSING / UNCONFIGURED</span>';
 
-          const actionBtn = h.id === 'git_hook'
-            ? `<button class="btn btn-sm" onclick="installGitHook()">${h.exists ? 'Re-install Hook' : 'Install Git Hook'}</button>`
-            : `<button class="btn btn-sm" onclick="syncAllHarnesses()">Sync Instructions</button>`;
+          let actionBtn = `<button class="btn btn-sm" onclick="syncAllHarnesses()">Sync Instructions</button>`;
+          if (h.id === 'git_hook') {
+            actionBtn = `<button class="btn btn-sm" onclick="installGitHook()">${h.exists ? 'Re-install Hook' : 'Install Git Hook'}</button>`;
+          } else if (h.id === 'github_actions') {
+            actionBtn = `<button class="btn btn-sm" onclick="installCiWorkflow()">${h.exists ? 'Re-install Workflow' : 'Install CI Workflow'}</button>`;
+          }
 
           return `
             <div class="tool-card">
@@ -1731,6 +1737,44 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       }
     }
 
+    async function installCiWorkflow() {
+      try {
+        const res = await fetch('/api/ci/install', { method: 'POST' });
+        const data = await res.json();
+        if (res.ok) {
+          showToast('GitHub Actions guardrail workflow installed.', 'success');
+          await loadHarnesses();
+          await loadOverview();
+        } else {
+          showToast(`CI install failed: ${data.error}`, 'error');
+        }
+      } catch (err) {
+        showToast('Failed to install CI workflow', 'error');
+      }
+    }
+
+    async function promoteRule(ruleId, event) {
+      if (event) event.stopPropagation();
+      try {
+        const res = await fetch('/api/rules/promote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rule_id: ruleId }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          showToast(`Guardrail ${ruleId} promoted to active!`, 'success');
+          await loadRules();
+          await loadOverview();
+          await loadIncidents();
+        } else {
+          showToast(`Failed to promote rule: ${data.error}`, 'error');
+        }
+      } catch (err) {
+        showToast('Network error promoting rule', 'error');
+      }
+    }
+
     async function loadIncidents() {
       try {
         const res = await fetch('/api/incidents');
@@ -1750,26 +1794,52 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
         container.innerHTML = list.map(ev => {
           const isAutopsy = ev.type === 'AUTOPSY_RECORD';
+          const isPreCommit = ev.type === 'PRE_COMMIT_BLOCKED';
           const p = ev.payload || {};
-          const badgeCls = isAutopsy ? 'badge-candidate' : 'badge-block';
-          const typeLabel = isAutopsy ? 'FAILURE AUTOPSY' : 'PEER CRITIQUE';
+          let badgeCls = 'badge-warn';
+          let typeLabel = 'INCIDENT';
+          if (isAutopsy) {
+            badgeCls = 'badge-candidate';
+            typeLabel = 'FAILURE AUTOPSY';
+          } else if (isPreCommit) {
+            badgeCls = 'badge-block';
+            typeLabel = 'COMMIT BARRIER';
+          } else if (ev.type === 'PEER_CRITIQUE') {
+            badgeCls = 'badge-block';
+            typeLabel = 'PEER CRITIQUE';
+          }
+
+          let detailText = '';
+          if (isAutopsy) {
+            detailText = `Captured incident on rule <code>${escapeHtml(p.rule_id || '')}</code>: "${escapeHtml(p.statement || '')}"`;
+          } else if (isPreCommit) {
+            const loc = p.line_number ? `:${p.line_number}` : '';
+            detailText = `Pre-commit blocked on rule <code>${escapeHtml(p.rule_id || '')}</code> in <code>${escapeHtml(p.file_path || '')}${loc}</code>: ${escapeHtml(p.message || '')}`;
+          } else {
+            detailText = `Auditor verdict: <strong>${escapeHtml(p.verdict || '')}</strong>. ${escapeHtml(p.message || '')}`;
+          }
+
+          const promoteBtn = (isAutopsy && p.rule_id)
+            ? `<button class="btn btn-sm" onclick="promoteRule('${escapeHtml(p.rule_id)}', event)" style="padding: 3px 8px; font-size: 11px; background: #059669; color: #fff; margin-left: 8px;">Promote Candidate</button>`
+            : '';
 
           return `
             <div class="incident-card">
               <div class="incident-header">
                 <div style="display: flex; gap: 8px; align-items: center;">
                   <span class="badge ${badgeCls}">${typeLabel}</span>
-                  <span style="font-family: var(--font-mono); font-size: 12px; color: #cbd5e1;">${ev.event_id || ''}</span>
-                  <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">by ${ev.sender || 'auditor'}</span>
+                  <span style="font-family: var(--font-mono); font-size: 12px; color: #cbd5e1;">${escapeHtml(ev.event_id || '')}</span>
+                  <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">by ${escapeHtml(ev.sender || 'auditor')}</span>
+                  ${promoteBtn}
                 </div>
-                <span style="font-size: 11px; color: var(--text-muted);">${ev.timestamp || ''}</span>
+                <span style="font-size: 11px; color: var(--text-muted);">${escapeHtml(ev.timestamp || '')}</span>
               </div>
               <div style="font-size: 13.5px; color: #e2e8f0; margin-top: 6px;">
-                ${isAutopsy ? `Captured incident on rule <code>${p.rule_id || ''}</code>: "${p.statement || ''}"` : `Auditor verdict: <strong>${p.verdict || ''}</strong>. ${p.message || ''}`}
+                ${detailText}
               </div>
               <details style="margin-top: 10px;">
                 <summary style="font-size: 11px; color: var(--text-muted); cursor: pointer;">Raw Blackboard Event</summary>
-                <pre style="margin-top: 6px; background: #090d16; border: 1px solid var(--border); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 11px; overflow-x: auto; color: #94a3b8;">${JSON.stringify(ev, null, 2)}</pre>
+                <pre style="margin-top: 6px; background: #090d16; border: 1px solid var(--border); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 11px; overflow-x: auto; color: #94a3b8;">${escapeHtml(JSON.stringify(ev, null, 2))}</pre>
               </details>
             </div>
           `;
@@ -2354,6 +2424,14 @@ def _get_harnesses_data(root: Path) -> dict[str, Any]:
             "tool": "Git Hook",
             "description": "Deterministic enforcement barrier preventing violation commits.",
         },
+        {
+            "id": "github_actions",
+            "name": "GitHub Actions Guardrail",
+            "path": ".github/workflows/aos-guardrails.yml",
+            "exists": (root / ".github" / "workflows" / "aos-guardrails.yml").is_file(),
+            "tool": "GitHub Actions",
+            "description": "Continuous integration barrier verifying invariants on pull requests.",
+        },
     ]
     connected = sum(1 for h in harnesses if h["exists"])
     data: dict[str, Any] = {
@@ -2610,7 +2688,7 @@ def _get_incidents(root: Path) -> list[dict[str, Any]]:
     incidents = [
         e.to_dict()
         for e in events
-        if e.type in ("AUTOPSY_RECORD", "PEER_CRITIQUE")
+        if e.type in ("AUTOPSY_RECORD", "PEER_CRITIQUE", "PRE_COMMIT_BLOCKED")
     ]
     incidents.reverse()
     return incidents
@@ -2714,6 +2792,7 @@ def _get_harness_view(root: Path, tool_id: str) -> tuple[int, dict[str, Any]]:
         "copilot": (".github/copilot-instructions.md", "GitHub Copilot"),
         "windsurf": (".windsurfrules", "Windsurf IDE"),
         "git_hook": (".git/hooks/pre-commit", "Git Pre-Commit Hook"),
+        "github_actions": (".github/workflows/aos-guardrails.yml", "GitHub Actions CI Guardrail"),
     }
     matched = tool_map.get(tool_id)
     if not matched:
@@ -2735,6 +2814,8 @@ def _get_harness_view(root: Path, tool_id: str) -> tuple[int, dict[str, Any]]:
         exists = False
         if tool_id == "git_hook":
             content = "# Pre-commit hook is not installed yet.\n# Click 'Install Git Hook' in dashboard to install.\n"
+        elif tool_id == "github_actions":
+            content = "# GitHub Actions guardrail workflow is not installed yet.\n# Click 'Install CI Workflow' in dashboard to install.\n"
         else:
             engine = RuleEngine(root_dir=root)
             active_rules = engine.get_rules(status="active")
@@ -3022,6 +3103,32 @@ class DashboardRequestHandler(BaseHTTPRequestHandler):
             try:
                 hook_path = install_git_hook(root_dir=self.root_dir)
                 self._send_json({"success": True, "path": str(hook_path)})
+            except Exception as exc:
+                self._send_json({"success": False, "error": str(exc)}, status_code=500)
+        elif path == "/api/rules/promote":
+            rule_id = payload.get("rule_id", "")
+            if not rule_id:
+                self._send_json({"error": "Missing rule_id"}, status_code=400)
+                return
+            from aos.autopsy import promote_candidate
+            sub_dir = _get_substrate_dir(self.root_dir)
+            promoted = promote_candidate(rule_id=rule_id, peer_agent="web-control-plane", substrate_dir=sub_dir)
+            if promoted:
+                self._send_json({"success": True, "rule_id": rule_id, "path": str(promoted)})
+            else:
+                self._send_json({"error": f"Rule {rule_id} not found in candidate store."}, status_code=404)
+        elif path == "/api/ci/install":
+            from aos.ci import install_ci_workflow
+            try:
+                target = install_ci_workflow(root_dir=self.root_dir)
+                self._send_json({"success": True, "path": str(target)})
+            except Exception as exc:
+                self._send_json({"success": False, "error": str(exc)}, status_code=500)
+        elif path == "/api/ci/uninstall":
+            from aos.ci import uninstall_ci_workflow
+            try:
+                removed = uninstall_ci_workflow(root_dir=self.root_dir)
+                self._send_json({"success": True, "removed": removed})
             except Exception as exc:
                 self._send_json({"success": False, "error": str(exc)}, status_code=500)
         elif path == "/api/check":
