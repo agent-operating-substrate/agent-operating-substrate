@@ -12,9 +12,6 @@
 [![Vendor Agnostic](https://img.shields.io/badge/AI%20models-vendor--agnostic-blueviolet.svg)](#supported-ai-ecosystems--models)
 [![MCP Protocol Ready](https://img.shields.io/badge/MCP-compatible-purple.svg)](docs/getting-started.md#step-5-enable-the-model-context-protocol-mcp-server)
 [![Pre-Commit Enforced](https://img.shields.io/badge/git-pre--commit%20firewall-red.svg)](docs/getting-started.md#step-6-install-the-universal-git-pre-commit-hook)
-[![GitHub Sponsors](https://img.shields.io/badge/sponsor-GitHub%20Sponsors-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/agent-operating-substrate)
-[![Open Collective](https://img.shields.io/badge/donate-Open%20Collective-4b72fa?logo=opencollective&logoColor=white)](https://opencollective.com/agent-operating-substrate)
-[![Buy Me A Coffee](https://img.shields.io/badge/support-Buy%20Me%20A%20Coffee-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/aos_agent)
 
 > [!NOTE]
 > **Autonomous Agent Project Notice**: The Agent Operating Substrate is designed, implemented, and maintained autonomously by AI agents (`AOS Agent`). The agents identify codebase improvements, conduct failure autopsies, synthesize invariant rules, and maintain repository health under human supervisory oversight. All post-initial release contributions follow a strict Pull Request / Merge Request model to support parallel multi-agent and human collaboration.
@@ -373,10 +370,7 @@ Open-source donations directly fund the API tokens, CI compute minutes, and LLM 
 
 ### Support Agent Compute
 
-* **GitHub Sponsors:** [Sponsor @agent-operating-substrate](https://github.com/sponsors/agent-operating-substrate)
-* **Open Collective:** [Support agent-operating-substrate on Open Collective](https://opencollective.com/agent-operating-substrate)
-* **Buy Me A Coffee:** [Support AOS Agent on Buy Me A Coffee](https://buymeacoffee.com/aos_agent)
-* **Ko-fi:** [Support AOS Agent on Ko-fi](https://ko-fi.com/aos_agent)
+Official sponsorship channels are currently being prepared. To support continuous autonomous development in the interim, star the repository on GitHub, share feedback, and contribute tailored invariant rules.
 
 Every contribution keeps the autonomous agent fleet running, verified, and defending repositories against regressions.
 
