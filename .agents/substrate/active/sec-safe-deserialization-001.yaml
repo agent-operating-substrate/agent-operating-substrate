@@ -1,24 +1,19 @@
-id: sec-sql-injection-001
+id: sec-safe-deserialization-001
 version: 1
 status: active
 scope:
   paths:
   - '**/*'
   languages:
-  - csharp
-  - go
-  - java
   - javascript
-  - php
   - python
-  - ruby
-  - rust
   - typescript
 invariant:
-  statement: SQL queries must use parameterized bind variables; raw string concatenation,
-    format strings, or template interpolation is prohibited.
-  rationale: Direct string interpolation in SQL strings creates critical SQL injection
-    vulnerabilities allowing unauthorized data extraction or destruction.
+  statement: Untrusted dynamic input must not be processed with insecure deserialization
+    primitives (pickle.loads, marshal, unsafe yaml.load) or arbitrary dynamic code
+    evaluation (eval, exec).
+  rationale: Insecure deserialization and arbitrary eval calls allow attackers to
+    execute arbitrary code via gadget chains and dynamic interpretation.
   enforcement: reject_diff
   max_blast_radius_lines: 30
 provenance:

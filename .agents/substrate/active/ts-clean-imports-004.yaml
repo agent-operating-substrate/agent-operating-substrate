@@ -1,4 +1,4 @@
-id: ts-floating-promises-002
+id: ts-clean-imports-004
 version: 1
 status: active
 scope:
@@ -8,11 +8,11 @@ scope:
   languages:
   - typescript
 invariant:
-  statement: Asynchronous promises must be awaited, returned to the caller, or explicitly
-    handled with a .catch() callback or void operator.
-  rationale: Floating unhandled promises produce unhandled promise rejections, race
-    conditions, and silently dropped async failures.
-  enforcement: reject_diff
+  statement: TypeScript modules must use explicit relative or mapped aliases, avoiding
+    circular imports and deep imports into private internal module subpaths.
+  rationale: Circular and poorly bounded imports cause undefined runtime values, increase
+    bundled bundle size, and degrade tree shaking.
+  enforcement: warn
   max_blast_radius_lines: 30
 provenance:
   incident_id: pack-typescript-core

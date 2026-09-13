@@ -1,0 +1,23 @@
+id: gh-blast-radius-limit-003
+version: 1
+status: active
+scope:
+  paths:
+  - '**/*'
+  languages: []
+invariant:
+  statement: Automated agent changes must maintain surgical precision by touching
+    only required lines, maintaining single-task contiguous changes within 50 lines
+    without unsolicited refactoring.
+  rationale: Enforces surgical diff discipline to ensure modifications are reviewable,
+    verifiable, and free from unintended regressions.
+  enforcement: reject_diff
+  max_blast_radius_lines: 30
+provenance:
+  incident_id: pack-general-hygiene
+  git_commit: HEAD
+  inscribing_agent: pack-installer
+  created_at: '2026-09-13T07:18:25Z'
+  last_verified_at: '2026-09-13T07:18:25Z'
+  trigger_count: 1
+  peer_consensus_agent: pack-curator

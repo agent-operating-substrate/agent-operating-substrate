@@ -1,4 +1,4 @@
-id: py-no-wildcard-import-002
+id: py-async-no-blocking-io-003
 version: 1
 status: active
 scope:
@@ -7,10 +7,10 @@ scope:
   languages:
   - python
 invariant:
-  statement: Wildcard imports ('from module import *') are prohibited; all imported
-    symbols must be explicitly named or imported via the module namespace.
-  rationale: Wildcard imports pollute module namespaces, mask circular dependencies,
-    hide symbol origins, and break static analysis.
+  statement: Asynchronous functions (async def) must not invoke synchronous blocking
+    I/O calls such as time.sleep, synchronous requests, or blocking filesystem operations.
+  rationale: Blocking operations in coroutines stall the main asyncio event loop,
+    starving concurrent tasks and destroying service throughput.
   enforcement: reject_diff
   max_blast_radius_lines: 30
 provenance:

@@ -1,24 +1,22 @@
-id: sec-sql-injection-001
+id: sec-ssrf-prevention-001
 version: 1
 status: active
 scope:
   paths:
   - '**/*'
   languages:
-  - csharp
   - go
   - java
   - javascript
-  - php
   - python
-  - ruby
   - rust
   - typescript
 invariant:
-  statement: SQL queries must use parameterized bind variables; raw string concatenation,
-    format strings, or template interpolation is prohibited.
-  rationale: Direct string interpolation in SQL strings creates critical SQL injection
-    vulnerabilities allowing unauthorized data extraction or destruction.
+  statement: Outbound HTTP and network requests constructed from dynamic user input
+    must validate hostnames against an allowlist and block private or link-local IP
+    addresses.
+  rationale: Unvalidated outbound network requests permit SSRF attacks targeting cloud
+    instance metadata services and internal microservices.
   enforcement: reject_diff
   max_blast_radius_lines: 30
 provenance:
