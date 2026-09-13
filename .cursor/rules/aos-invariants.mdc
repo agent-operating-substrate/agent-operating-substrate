@@ -213,9 +213,9 @@ Cursor Composer rules: you must strictly obey these machine-enforced repository 
 ## Proactive Guardrail Memory: Recent Interceptions
 The following failure modes were recently intercepted by repository barriers.
 Ensure your implementation proactively avoids these exact patterns:
-* Intercepted [team-agents-md-rule-3] in zensical.toml: Violation of 'team-agents-md-rule-3': Content exceeds maximum blast radius of 30 lines (85 lines detected).
-* Intercepted [team-agents-md-rule-1] in zensical.toml: Violation of 'team-agents-md-rule-1': Content exceeds maximum blast radius of 30 lines (85 lines detected).
-* Intercepted [sec-no-secrets-001] in zensical.toml: Violation of 'sec-no-secrets-001': Content exceeds maximum blast radius of 30 lines (85 lines detected).
-* Intercepted [gh-no-artifacts-credentials-002] in zensical.toml: Violation of 'gh-no-artifacts-credentials-002': Content exceeds maximum blast radius of 30 lines (85 lines detected).
-* Intercepted [gh-blast-radius-limit-003] in zensical.toml: Violation of 'gh-blast-radius-limit-003': Content exceeds maximum blast radius of 30 lines (85 lines detected).
+* Intercepted [team-agents-md-rule-3] in tests/test_ui.py: Violation of 'team-agents-md-rule-3': Content exceeds maximum blast radius of 30 lines (689 lines detected).
+* Intercepted [team-agents-md-rule-1] in tests/test_ui.py: Violation of 'team-agents-md-rule-1': Content exceeds maximum blast radius of 30 lines (689 lines detected).
+* Intercepted [sec-ssrf-prevention-001] in tests/test_ui.py: Violation of 'sec-ssrf-prevention-001': Content exceeds maximum blast radius of 30 lines (689 lines detected).
+* Intercepted [sec-sql-injection-001] in tests/test_ui.py: Violation of 'sec-sql-injection-001': Content exceeds maximum blast radius of 30 lines (689 lines detected).
+* Intercepted [sec-safe-deserialization-001] in tests/test_ui.py: Violation of 'sec-safe-deserialization-001': Content exceeds maximum blast radius of 30 lines (689 lines detected).
 <!-- AOS_INVARIANTS_END -->
