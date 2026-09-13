@@ -37,11 +37,38 @@ EXTENSION_LANGUAGE_MAP: dict[str, str] = {
 }
 
 
+def _translate_glob(pat: str) -> str:
+    if hasattr(glob, "translate"):
+        return glob.translate(pat, recursive=True, include_hidden=True)
+    res: list[str] = []
+    i, n = 0, len(pat)
+    while i < n:
+        c = pat[i]
+        i += 1
+        if c == "*":
+            if i < n and pat[i] == "*":
+                i += 1
+                if i < n and pat[i] == "/":
+                    i += 1
+                    res.append("(?:.*/)?")
+                else:
+                    res.append(".*")
+            else:
+                res.append("[^/]*")
+        elif c == "?":
+            res.append("[^/]")
+        elif c in "[](){}+.^$|\\":
+            res.append(re.escape(c))
+        else:
+            res.append(c)
+    return r"(?s:" + "".join(res) + r")\Z"
+
+
 @lru_cache(maxsize=4096)
 def _compile_glob(pattern: str) -> re.Pattern[str]:
     # Normalize slashes in pattern
     normalized_pattern = pattern.replace("\\", "/")
-    regex_str = glob.translate(normalized_pattern, recursive=True, include_hidden=True)
+    regex_str = _translate_glob(normalized_pattern)
     return re.compile(regex_str)
 
 
