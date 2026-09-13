@@ -12,7 +12,6 @@ invariant:
   rationale: Audit requirement ensuring memory safety invariants and preconditions
     are explicitly documented at each unsafe boundary to verify soundness.
   enforcement: reject_diff
-  max_blast_radius_lines: 30
 provenance:
   incident_id: pack-rust-core
   git_commit: HEAD

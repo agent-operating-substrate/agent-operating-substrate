@@ -16,7 +16,6 @@ invariant:
   rationale: Desynchronized dependency manifests and lockfiles cause irreproducible
     builds, CI failures, and unexpected environment drift.
   enforcement: reject_diff
-  max_blast_radius_lines: 30
 provenance:
   incident_id: pack-general-hygiene
   git_commit: HEAD

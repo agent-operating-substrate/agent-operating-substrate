@@ -13,7 +13,6 @@ invariant:
   rationale: Floating unhandled promises produce unhandled promise rejections, race
     conditions, and silently dropped async failures.
   enforcement: reject_diff
-  max_blast_radius_lines: 30
 provenance:
   incident_id: pack-typescript-core
   git_commit: HEAD

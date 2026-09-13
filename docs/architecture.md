@@ -6,13 +6,12 @@
 
 ## 1. The Stigmergic Paradigm
 
-In classical multi-agent system design, agents communicate through direct point-to-point RPCs or through a centralized orchestrator (the hub-and-spoke pattern). While adequate for toy demonstrations, this model collapses when applied to real-world software engineering:
+Centralized multi-agent patterns (hub-and-spoke RPCs) collapse in software engineering:
+* **Context Window Exhaustion:** Passing verbose conversation transcripts and revisions between models quickly blows context limits.
+* **Synchronization Bottlenecks:** Centralized orchestrators serialize execution queues into single points of failure.
+* **The Human Dispatcher Tax:** Engineers become manual routers, copying logs, pasting diffs, and triaging agent collisions.
 
-* **Context Window Exhaustion:** Passing entire conversation transcripts and code revisions between multiple agents rapidly exceeds context limits.
-* **Synchronization Bottlenecks:** Centralized orchestrators create serialized execution queues and single points of failure.
-* **The Human Dispatcher Tax:** In practice, human engineers are forced to bridge communication gaps between agents, reviewing diffs, copying logs, and triggering secondary agents manually.
-
-AOS resolves this architectural failure by implementing **stigmergy**: indirect, decentralized coordination mediated through trace modifications in a shared environment.
+AOS resolves this architectural failure with **stigmergy**: indirect, decentralized coordination mediated through persistent trace modifications on the repository filesystem.
 
 ```mermaid
 flowchart TD
@@ -48,23 +47,24 @@ Agents do not need to know about each other's private states. They simply read a
 
 AOS operates three nested autonomous loops that continuously govern, adapt, and refine the codebase rules:
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│ Loop 1: Fast Execution Loop (Seconds)                           │
-│ Worker queries substrate ──> Verifies invariants ──> Emits patch│
-└────────────────────────────────┬────────────────────────────────┘
-                                 │ On Failure
-                                 ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ Loop 2: Forensic Autopsy Loop (Minutes)                         │
-│ Isolate trace ──> Diagnose assumption ──> Inscribe candidate    │
-└────────────────────────────────┬────────────────────────────────┘
-                                 │ Background Cycle
-                                 ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ Loop 3: Evolutionary Curation Loop (Hours / Days)               │
-│ Subsumption ──> Conflict arbitration ──> Archival of stale rules│
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph Loop1["Loop 1: Fast Execution Loop (Seconds)"]
+        L1A["Worker queries substrate"] --> L1B["Verifies active invariants"] --> L1C["Emits verified patch"]
+    end
+
+    subgraph Loop2["Loop 2: Forensic Autopsy Loop (Minutes)"]
+        L2A["Intercept failure trace"] --> L2B["Diagnose false assumption"] --> L2C["Inscribe candidate rule"]
+    end
+
+    subgraph Loop3["Loop 3: Evolutionary Curation Loop (Hours / Days)"]
+        L3A["Subsumption analysis"] --> L3B["Conflict arbitration"] --> L3C["Archive stale rules"]
+    end
+
+    L1C -.->|"On Rejection / Crash"| L2A
+    L2C -->|"Peer Consensus Promotion"| Loop1
+    Loop2 -.->|"Periodic Maintenance"| Loop3
+    Loop3 -->|"Pruned Invariants"| Loop1
 ```
 
 ### Loop 1: The Execution Loop (Fast Cycle, Seconds)
@@ -160,3 +160,12 @@ Every invariant rule has Git provenance: incident commit hashes, authoring agent
 
 ### Universal Harness Interoperability
 AOS does not lock you into a single editor or model. Whether using Cursor, Claude Code, Windsurf, GitHub Copilot, or Antigravity, all agents share the exact same substrate invariants through `aos sync` and `aos mcp`.
+
+***
+
+## Next Steps
+
+* [Getting Started](getting-started.md): Initialize the repository substrate and install curated packs in under 5 minutes.
+* [AI Vendor Abstraction](vendor-abstraction.md): Model neutrality, prompt projection, and Git pre-commit enforcement.
+* [Enterprise Fleet Governance](enterprise-fleet.md): Synchronize invariant rules across hundreds of enterprise repositories.
+

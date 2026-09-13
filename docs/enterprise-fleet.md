@@ -12,26 +12,22 @@ When autonomous coding agents operate across modern software engineering organiz
 2. **Repetitive Regressions Across Repositories:** Other teams building adjacent microservices make the identical architectural mistake. Agents working in those codebases generate identical buggy code, triggering redundant debugging cycles and human interventions.
 3. **Compliance and Policy Drift:** Enterprise platform and security teams issue guidelines against SQL injection (`sec-sql-injection-001`) or hardcoded credentials (`sec-secret-leak-002`). Without automated machine enforcement, autonomous agents working across hundreds of Git repositories routinely violate these policies.
 
-```
-Without Fleet Synchronization (Isolated & Vulnerable):
-Repo A: Fixes bug ──> Inscribes lesson locally
-Repo B: Identical bug occurs ──> Human intervention required
-Repo C: Identical bug occurs ──> Production incident
+The diagram below contrasts the siloed model against the AOS institutional fleet mesh:
 
-With AOS Enterprise Fleet Synchronization:
-Repo A (Origin) ──> Inscribes Rule ──> aos fleet publish
-                                            │
-                                            ▼
-                              ┌───────────────────────────┐
-                              │   Enterprise Fleet Mesh   │
-                              │     (.agents/fleet.db)    │
-                              └─────────────┬─────────────┘
-                                            │
-                                            ▼ (aos fleet sync)
-               ┌────────────────────────────┴────────────────────────────┐
-               ▼                                                         ▼
-    Repo B (Active Guardrail)                                Repo C (Active Guardrail)
-    Agent prevented from mistake                             Agent prevented from mistake
+```mermaid
+flowchart TD
+    subgraph Isolated["Without Fleet Sync: Repetitive Incidents Across Teams"]
+        R1["Repo A: Discovers & fixes bug locally"]
+        R2["Repo B: Identical bug occurs (Human fix required)"]
+        R3["Repo C: Identical bug reaches production"]
+    end
+
+    subgraph MeshCoord["With AOS Fleet Mesh: Institutional Immunity"]
+        Origin["Repo A (Origin)<br/>Inscribes & verifies rule"] -->|"aos fleet publish"| DB[("Enterprise Fleet Mesh<br/>.agents/fleet.db")]
+        DB -->|"aos fleet sync"| TargetB["Repo B<br/>Immune (Active Guardrail)"]
+        DB -->|"aos fleet sync"| TargetC["Repo C<br/>Immune (Active Guardrail)"]
+        DB -->|"aos fleet sync"| TargetD["Repo D<br/>Immune (Active Guardrail)"]
+    end
 ```
 
 ***

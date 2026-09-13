@@ -13,7 +13,6 @@ invariant:
   rationale: Circular and poorly bounded imports cause undefined runtime values, increase
     bundled bundle size, and degrade tree shaking.
   enforcement: warn
-  max_blast_radius_lines: 30
 provenance:
   incident_id: pack-typescript-core
   git_commit: HEAD

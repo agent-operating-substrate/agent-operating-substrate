@@ -1,4 +1,4 @@
-﻿id: gh-release-title-001
+id: gh-release-title-001
 version: 1
 status: active
 scope:
@@ -8,10 +8,11 @@ scope:
   languages:
   - yaml
 invariant:
-  statement: GitHub release titles must strictly contain only the version tag (e.g., ${{ github.ref_name }} or v0.2.0) without descriptive phrases or subtitles.
-  rationale: Enforces clean, predictable release naming conventions across CI pipelines and release automation.
+  statement: GitHub release titles must strictly contain only the version tag (e.g.,
+    ${{ github.ref_name }} or v0.2.0) without descriptive phrases or subtitles.
+  rationale: Enforces clean, predictable release naming conventions across CI pipelines
+    and release automation.
   enforcement: reject_diff
-  max_blast_radius_lines: 30
 provenance:
   incident_id: inc-release-title-contract
   git_commit: HEAD

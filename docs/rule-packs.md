@@ -21,47 +21,56 @@ AOS provides nine curated packs across security, language runtimes, and system p
 ### 1. `security-owasp`
 Defends against the most critical web application security vulnerabilities frequently introduced by LLMs.
 
+!!! tip "Install Command"
+    ```bash
+    aos pack install security-owasp
+    ```
+
 | Rule ID | Statement | Rationale | Enforcement | Scope |
 | :--- | :--- | :--- | :--- | :--- |
 | **`sec-sql-injection-001`** | SQL queries must use parameterized bind variables, never raw string interpolation or concatenation. | Direct string concatenation creates critical SQL injection vulnerabilities in data access layers. | `reject_diff` | `**/*` (Python, JS, TS, Go, Java) |
 | **`sec-secret-leak-002`** | API keys, secrets, private certificates, and passwords must never be committed to source files. | Hardcoded credentials in Git histories result in credential compromise and audit failures. | `reject_diff` | `**/*` (All languages) |
 | **`sec-ssrf-003`** | Outbound HTTP requests constructed from dynamic input must validate targets against an allowlist and block private network ranges. | Unvalidated network requests allow SSRF attacks targeting cloud metadata services and internal infrastructure. | `reject_diff` | `**/*` (Python, JS, TS, Go) |
 
-#### Example Invariant Definition: `sec-sql-injection-001`
+??? example "View Example Invariant Specification: `sec-sql-injection-001`"
+    ```yaml
+    id: "sec-sql-injection-001"
+    version: 1
+    status: "active"
+    scope:
+      paths:
+        - "**/*"
+      languages:
+        - "python"
+        - "javascript"
+        - "typescript"
+        - "go"
+        - "java"
 
-```yaml
-id: "sec-sql-injection-001"
-version: 1
-status: "active"
-scope:
-  paths:
-    - "**/*"
-  languages:
-    - "python"
-    - "javascript"
-    - "typescript"
-    - "go"
-    - "java"
+    invariant:
+      statement: "SQL queries must use parameterized bind variables, never raw string interpolation or concatenation."
+      rationale: "Direct string interpolation in SQL strings creates critical SQL injection vulnerabilities."
+      enforcement: "reject_diff"
+      max_blast_radius_lines: 30
 
-invariant:
-  statement: "SQL queries must use parameterized bind variables, never raw string interpolation or concatenation."
-  rationale: "Direct string interpolation in SQL strings creates critical SQL injection vulnerabilities."
-  enforcement: "reject_diff"
-  max_blast_radius_lines: 30
-
-provenance:
-  incident_id: "pack-security-owasp"
-  git_commit: "HEAD"
-  inscribing_agent: "pack-installer"
-  created_at: "2026-09-08T18:00:00Z"
-  last_verified_at: "2026-09-08T18:00:00Z"
-  trigger_count: 0
-```
+    provenance:
+      incident_id: "pack-security-owasp"
+      git_commit: "HEAD"
+      inscribing_agent: "pack-installer"
+      created_at: "2026-09-08T18:00:00Z"
+      last_verified_at: "2026-09-08T18:00:00Z"
+      trigger_count: 0
+    ```
 
 ***
 
 ### 2. `python-clean-architecture`
 Enforces high-maintainability Python standards, clean separation of concerns, and type discipline.
+
+!!! tip "Install Command"
+    ```bash
+    aos pack install python-clean-architecture
+    ```
 
 | Rule ID | Statement | Rationale | Enforcement | Scope |
 | :--- | :--- | :--- | :--- | :--- |
@@ -75,6 +84,11 @@ Enforces high-maintainability Python standards, clean separation of concerns, an
 ### 3. `general-hygiene` (Universal Repository Health)
 Enforces dependency manifest synchronization, prevents committing local environment credentials or build caches, and limits agent blast radius.
 
+!!! tip "Install Command"
+    ```bash
+    aos pack install general-hygiene
+    ```
+
 | Rule ID | Statement | Rationale | Enforcement | Scope |
 | :--- | :--- | :--- | :--- | :--- |
 | **`gh-deps-sync-001`** | Changes to package dependency manifests must include synchronized updates to corresponding lockfiles. | Desynchronized dependency manifests and lockfiles cause irreproducible builds and unexpected environment drift. | `reject_diff` | `package.json`, `pyproject.toml`, `Cargo.toml`, `go.mod` |
@@ -85,6 +99,11 @@ Enforces dependency manifest synchronization, prevents committing local environm
 
 ### 4. `universal-security` (Layer 1 Baseline)
 Non-negotiable baseline security guardrails applicable across all languages and frameworks.
+
+!!! tip "Install Command"
+    ```bash
+    aos pack install universal-security
+    ```
 
 | Rule ID | Statement | Rationale | Enforcement | Scope |
 | :--- | :--- | :--- | :--- | :--- |
@@ -97,6 +116,11 @@ Non-negotiable baseline security guardrails applicable across all languages and 
 ### 5. `web-typescript`
 Strict type safety and promise handling for modern TypeScript services and web applications.
 
+!!! tip "Install Command"
+    ```bash
+    aos pack install web-typescript
+    ```
+
 | Rule ID | Statement | Rationale | Enforcement | Scope |
 | :--- | :--- | :--- | :--- | :--- |
 | **`ts-strict-no-explicit-any`** | TypeScript code must not use explicit any casts; use unknown with type narrowing instead. | The any type bypasses compile-time safety and propagates untyped variables across the codebase. | `reject_diff` | `src/**/*.ts`, `src/**/*.tsx` |
@@ -106,6 +130,11 @@ Strict type safety and promise handling for modern TypeScript services and web a
 
 ### 6. `python-fastapi`
 Strict Pydantic models and OpenAPI schema integrity for Python web APIs.
+
+!!! tip "Install Command"
+    ```bash
+    aos pack install python-fastapi
+    ```
 
 | Rule ID | Statement | Rationale | Enforcement | Scope |
 | :--- | :--- | :--- | :--- | :--- |
@@ -117,6 +146,11 @@ Strict Pydantic models and OpenAPI schema integrity for Python web APIs.
 ### 7. `react-modern`
 Component boundary and hook dependency hygiene for modern React and Next.js applications.
 
+!!! tip "Install Command"
+    ```bash
+    aos pack install react-modern
+    ```
+
 | Rule ID | Statement | Rationale | Enforcement | Scope |
 | :--- | :--- | :--- | :--- | :--- |
 | **`react-hooks-deps`** | useEffect and useMemo must declare all reactive dependencies explicitly. | Incomplete dependency arrays cause stale closures, desynchronized UI state, and render loops. | `reject_diff` | `src/**/*.jsx`, `src/**/*.tsx` |
@@ -127,6 +161,11 @@ Component boundary and hook dependency hygiene for modern React and Next.js appl
 ### 8. `go-standard`
 Idiomatic Go error propagation and concurrency safeguards.
 
+!!! tip "Install Command"
+    ```bash
+    aos pack install go-standard
+    ```
+
 | Rule ID | Statement | Rationale | Enforcement | Scope |
 | :--- | :--- | :--- | :--- | :--- |
 | **`go-wrap-errors-with-fmt`** | Error returns must be checked and wrapped using fmt.Errorf with %w format specifier. | Preserves nested error chains and enables errors.Is and errors.As inspection in services. | `reject_diff` | `**/*.go` |
@@ -136,6 +175,11 @@ Idiomatic Go error propagation and concurrency safeguards.
 
 ### 9. `rust-safety`
 Safety audit trails and invariants for Rust unsafe operations.
+
+!!! tip "Install Command"
+    ```bash
+    aos pack install rust-safety
+    ```
 
 | Rule ID | Statement | Rationale | Enforcement | Scope |
 | :--- | :--- | :--- | :--- | :--- |
@@ -227,8 +271,8 @@ You can also manage rule packs through the AOS Control Plane:
 
 1. Launch the UI: `aos ui`
 2. Open `http://127.0.0.1:8484` in your browser.
-3. Switch to the **Active Guardrails** tab.
-4. Installed pack rules appear as interactive cards where you can toggle their enforcement status or inspect full YAML definitions.
+3. Switch to the **Rule Packs** tab (press ++3++).
+4. Browse curated packs (`security-owasp`, `python-clean-architecture`, etc.) and click **Install Pack** to activate all invariants with a single click. Installed rules immediately populate the **Active Guardrails** tab and sync to connected tools.
 
 ***
 

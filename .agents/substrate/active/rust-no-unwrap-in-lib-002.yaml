@@ -13,7 +13,6 @@ invariant:
   rationale: Calling unwrap or expect panics the executing thread on unexpected conditions,
     crashing services without opportunity for graceful recovery.
   enforcement: reject_diff
-  max_blast_radius_lines: 30
 provenance:
   incident_id: pack-rust-core
   git_commit: HEAD

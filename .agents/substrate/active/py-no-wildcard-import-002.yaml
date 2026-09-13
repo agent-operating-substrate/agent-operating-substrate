@@ -12,7 +12,6 @@ invariant:
   rationale: Wildcard imports pollute module namespaces, mask circular dependencies,
     hide symbol origins, and break static analysis.
   enforcement: reject_diff
-  max_blast_radius_lines: 30
 provenance:
   incident_id: pack-python-core
   git_commit: HEAD

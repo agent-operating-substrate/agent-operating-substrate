@@ -160,17 +160,20 @@ Simulate the pre-commit bouncer directly in your browser before committing:
 1. **Target File Path:** Enter the destination path (e.g. `src/aos/sample.py` or `src/geometry/simd/kernel.cpp`).
 2. **Code Snippet / Patch:** Paste your proposed code or diff into the editor.
 3. **One-Click Sample Presets:**
-   * **Test Em-Dash Violation:** Loads Python code containing a forbidden em dash, demonstrating immediate rejection by rule `aos-punct-001`.
-   * **Test Valid Python Code:** Loads clean, type-annotated code, demonstrating an `ALLOWED` verdict.
+    * **Test Em-Dash Violation:** Loads Python code containing a forbidden em dash, demonstrating immediate rejection by rule `aos-punct-001`.
+    * **Test Valid Python Code:** Loads clean, type-annotated code, demonstrating an `ALLOWED` verdict.
 4. **Evaluate Patch:** Click **Evaluate Patch** to run the deterministic rule engine.
 5. **Instant Verdict:**
-   * **BLOCKED (Reject Diff):** Displays exact invariant violations, matched line numbers, code snippets, and remediation steps.
-   * **ALLOWED (Clean Diff):** Confirms that all active repository guardrails are satisfied.
+    * **BLOCKED (Reject Diff):** Displays exact invariant violations, matched line numbers, code snippets, and remediation steps.
+    * **ALLOWED (Clean Diff):** Confirms that all active repository guardrails are satisfied.
 
 ### 2. Path Scope Inspection
 Enter any relative file path to discover which active invariants will constrain an agent when editing that file.
 
 ***
+
+!!! tip "Sub-Millisecond Keyboard Navigation"
+    The control plane dashboard includes native hotkeys for rapid engineering workflows. Press ++slash++ to immediately search active invariants, use ++1++ through ++5++ to jump between views, and dismiss any modal instantly with ++escape++.
 
 ## Keyboard Shortcuts
 
@@ -178,10 +181,10 @@ Navigate the control plane efficiently using keyboard shortcuts:
 
 | Key | Action |
 | :--- | :--- |
-| `1` | Switch to **Active Guardrails** tab |
-| `2` | Switch to **Connected AI Tools** tab |
-| `3` | Switch to **Rule Packs** tab |
-| `4` | Switch to **AI Incidents** tab |
-| `5` | Switch to **Guardrail Inspector & Tester** tab |
-| `/` | Focus search bar in Guardrails tab |
-| `Esc` | Close open modal or clear search focus |
+| ++1++ | Switch to **Active Guardrails** tab |
+| ++2++ | Switch to **Connected AI Tools** tab |
+| ++3++ | Switch to **Rule Packs** tab |
+| ++4++ | Switch to **AI Incidents** tab |
+| ++5++ | Switch to **Guardrail Inspector & Tester** tab |
+| ++slash++ | Focus search bar in Guardrails tab |
+| ++escape++ | Close open modal or clear search focus |

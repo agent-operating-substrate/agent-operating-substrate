@@ -9,7 +9,6 @@ invariant:
   statement: Touch only lines strictly required to complete the assigned task.
   rationale: Extracted from team repository instructions in AGENTS.md.
   enforcement: reject_diff
-  max_blast_radius_lines: 30
 provenance:
   incident_id: ingest-1789282836
   git_commit: HEAD

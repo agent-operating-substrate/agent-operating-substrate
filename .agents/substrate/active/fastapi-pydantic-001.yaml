@@ -13,7 +13,6 @@ invariant:
   rationale: Enforces runtime data validation, automatic serialization, and clean
     OpenAPI schema generation.
   enforcement: reject_diff
-  max_blast_radius_lines: 30
 provenance:
   incident_id: pack-python-fastapi
   git_commit: HEAD

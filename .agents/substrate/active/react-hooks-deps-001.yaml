@@ -15,7 +15,6 @@ invariant:
   rationale: Omitted dependencies cause stale closures and out-of-sync UI state, while
     state mutations in render cause infinite re-render loops.
   enforcement: reject_diff
-  max_blast_radius_lines: 30
 provenance:
   incident_id: pack-typescript-core
   git_commit: HEAD

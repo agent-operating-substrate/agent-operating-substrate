@@ -45,7 +45,6 @@ Universal agent instructions: these machine-enforced repository invariants apply
 * Rationale: Constraint specified in AGENTS.md Rule 3 and README.md zero external dependency principle.
 * Paths: pyproject.toml, src/**
 * Languages: python
-* Max blast radius lines: 30
 
 ### [aos-diff-002] (Enforcement: reject_diff)
 * Statement: Touch only lines strictly required to complete the assigned task. Never reformat adjacent code, comments, or imports. If a patch exceeds 30 contiguous lines, halt and provide technical justification.
@@ -60,7 +59,6 @@ Universal agent instructions: these machine-enforced repository invariants apply
 * Rationale: Enforces runtime data validation, automatic serialization, and clean OpenAPI schema generation.
 * Paths: src/**/*.py, app/**/*.py
 * Languages: python
-* Max blast radius lines: 30
 
 ### [gh-blast-radius-limit-003] (Enforcement: reject_diff)
 * Statement: Automated agent changes must maintain surgical precision by touching only required lines, maintaining single-task contiguous changes within 50 lines without unsolicited refactoring.
@@ -75,27 +73,23 @@ Universal agent instructions: these machine-enforced repository invariants apply
 * Rationale: Desynchronized dependency manifests and lockfiles cause irreproducible builds, CI failures, and unexpected environment drift.
 * Paths: package.json, pyproject.toml, Cargo.toml, go.mod, requirements*.txt
 * Languages: json
-* Max blast radius lines: 30
 
 ### [gh-no-artifacts-credentials-002] (Enforcement: reject_diff)
 * Statement: Build artifacts, compiled binaries, bytecode (.pyc, .class), local environment configuration files (.env), and IDE directories must not be committed to version control.
 * Rationale: Committing build outputs and local environment files bloats repository history, triggers merge conflicts, and leaks local configuration secrets.
 * Paths: **/*
-* Max blast radius lines: 30
 
 ### [gh-release-title-001] (Enforcement: reject_diff)
 * Statement: GitHub release titles must strictly contain only the version tag (e.g., ${{ github.ref_name }} or v0.2.0) without descriptive phrases or subtitles.
 * Rationale: Enforces clean, predictable release naming conventions across CI pipelines and release automation.
 * Paths: .github/workflows/*release*.yml, .github/workflows/*publish*.yml
 * Languages: yaml
-* Max blast radius lines: 30
 
 ### [go-context-propagation-002] (Enforcement: reject_diff)
 * Statement: Go functions performing I/O operations, network requests, database transactions, or concurrent tasks must accept context.Context as their first parameter and honor cancellation.
 * Rationale: Missing context propagation leads to orphaned goroutines, resource leaks, and unresponsive cancellation signals during server shutdowns or request timeouts.
 * Paths: **/*.go
 * Languages: go
-* Max blast radius lines: 30
 
 ### [go-error-wrap-001] (Enforcement: reject_diff)
 * Statement: Go functions returning an error must have that error checked; discarding errors via blank identifier '_' is prohibited, and returned errors must be wrapped with contextual information using fmt.Errorf with %w.
@@ -104,7 +98,6 @@ Universal agent instructions: these machine-enforced repository invariants apply
 * Strictly Forbidden: discarding errors or returning unwrapped bare errors
 * Paths: **/*.go
 * Languages: go
-* Max blast radius lines: 30
 
 ### [py-async-no-blocking-io-003] (Enforcement: reject_diff)
 * Statement: Asynchronous functions (async def) must not invoke synchronous blocking I/O calls such as time.sleep, synchronous requests, or blocking filesystem operations.
@@ -113,14 +106,12 @@ Universal agent instructions: these machine-enforced repository invariants apply
 * Strictly Forbidden: calling time.sleep or synchronous I/O inside async def functions
 * Paths: **/*.py
 * Languages: python
-* Max blast radius lines: 30
 
 ### [py-boundary-isolation-003] (Enforcement: reject_diff)
 * Statement: Domain models and business logic must not import from infrastructure or presentation layers.
 * Rationale: Clean architecture requires dependency inversion: domain cores must remain completely decoupled from I/O.
 * Paths: src/**/domain/**, src/**/models/**
 * Languages: python
-* Max blast radius lines: 30
 
 ### [py-no-bare-except-002] (Enforcement: reject_diff)
 * Statement: Catching Exception or bare except blocks must not silently suppress errors with pass; catch specific exception classes and log or re-raise errors.
@@ -129,7 +120,6 @@ Universal agent instructions: these machine-enforced repository invariants apply
 * Strictly Forbidden: bare 'except:' or 'except Exception: pass'
 * Paths: **/*.py
 * Languages: python
-* Max blast radius lines: 30
 
 ### [py-no-wildcard-import-002] (Enforcement: reject_diff)
 * Statement: Wildcard imports ('from module import *') are prohibited; all imported symbols must be explicitly named or imported via the module namespace.
@@ -138,7 +128,6 @@ Universal agent instructions: these machine-enforced repository invariants apply
 * Strictly Forbidden: from module import *
 * Paths: **/*.py
 * Languages: python
-* Max blast radius lines: 30
 
 ### [py-structured-logging-001] (Enforcement: warn)
 * Statement: Application, service, and core library code must use structured logging frameworks rather than standard print statements.
@@ -147,28 +136,24 @@ Universal agent instructions: these machine-enforced repository invariants apply
 * Strictly Forbidden: calling print(...) in application and library modules
 * Paths: src/**/*.py, lib/**/*.py, app/**/*.py
 * Languages: python
-* Max blast radius lines: 30
 
 ### [py-type-annotations-004] (Enforcement: warn)
 * Statement: Public functions, methods, and classes must provide explicit parameter and return type annotations.
 * Rationale: Static typing prevents runtime errors and provides clear machine-readable contracts for AI coding agents.
 * Paths: src/**
 * Languages: python
-* Max blast radius lines: 30
 
 ### [react-hooks-deps-001] (Enforcement: reject_diff)
 * Statement: React hooks (useEffect, useMemo, useCallback) must declare exhaustive dependencies and must not mutate component state during rendering.
 * Rationale: Omitted dependencies cause stale closures and out-of-sync UI state, while state mutations in render cause infinite re-render loops.
 * Paths: src/**/*.jsx, src/**/*.tsx, app/**/*.tsx
 * Languages: javascript, typescript
-* Max blast radius lines: 30
 
 ### [rust-no-unwrap-in-lib-002] (Enforcement: reject_diff)
 * Statement: Production Rust library and service code must not invoke .unwrap() or .expect() on Option or Result; propagate errors using '?' or handle them explicitly.
 * Rationale: Calling unwrap or expect panics the executing thread on unexpected conditions, crashing services without opportunity for graceful recovery.
 * Paths: src/**/*.rs, lib/**/*.rs
 * Languages: rust
-* Max blast radius lines: 30
 
 ### [rust-unsafe-safety-doc-001] (Enforcement: reject_diff)
 * Statement: Every unsafe block, unsafe function, or unsafe trait implementation in Rust must include a preceding '// SAFETY:' comment documenting invariant validity.
@@ -177,7 +162,6 @@ Universal agent instructions: these machine-enforced repository invariants apply
 * Strictly Forbidden: undocumented unsafe blocks or functions
 * Paths: **/*.rs
 * Languages: rust
-* Max blast radius lines: 30
 
 ### [sec-no-secrets-001] (Enforcement: reject_diff)
 * Statement: API keys, private certificates, authentication tokens, and secrets must never be committed to source files or repository configuration.
@@ -185,34 +169,29 @@ Universal agent instructions: these machine-enforced repository invariants apply
 * Compliant Pattern: os.environ.get('API_KEY') or pass via secure configuration
 * Strictly Forbidden: hardcoding raw API keys, secrets, or tokens in source files
 * Paths: **/*
-* Max blast radius lines: 30
 
 ### [sec-safe-deserialization-001] (Enforcement: reject_diff)
 * Statement: Untrusted dynamic input must not be processed with insecure deserialization primitives (pickle.loads, marshal, unsafe yaml.load) or arbitrary dynamic code evaluation (eval, exec).
 * Rationale: Insecure deserialization and arbitrary eval calls allow attackers to execute arbitrary code via gadget chains and dynamic interpretation.
 * Paths: **/*
 * Languages: javascript, python, typescript
-* Max blast radius lines: 30
 
 ### [sec-sql-injection-001] (Enforcement: reject_diff)
 * Statement: SQL queries must use parameterized bind variables; raw string concatenation, format strings, or template interpolation is prohibited.
 * Rationale: Direct string interpolation in SQL strings creates critical SQL injection vulnerabilities allowing unauthorized data extraction or destruction.
 * Paths: **/*
 * Languages: csharp, go, java, javascript, php, python, ruby, rust, typescript
-* Max blast radius lines: 30
 
 ### [sec-ssrf-prevention-001] (Enforcement: reject_diff)
 * Statement: Outbound HTTP and network requests constructed from dynamic user input must validate hostnames against an allowlist and block private or link-local IP addresses.
 * Rationale: Unvalidated outbound network requests permit SSRF attacks targeting cloud instance metadata services and internal microservices.
 * Paths: **/*
 * Languages: go, java, javascript, python, rust, typescript
-* Max blast radius lines: 30
 
 ### [team-agents-md-rule-1] (Enforcement: reject_diff)
 * Statement: Touch only lines strictly required to complete the assigned task.
 * Rationale: Extracted from team repository instructions in AGENTS.md.
 * Paths: **/*
-* Max blast radius lines: 30
 
 ### [team-agents-md-rule-3] (Enforcement: reject_diff)
 * Statement: If a patch exceeds 30 contiguous lines, halt and provide a technical justification.
@@ -227,7 +206,6 @@ Universal agent instructions: these machine-enforced repository invariants apply
 * Rationale: Circular and poorly bounded imports cause undefined runtime values, increase bundled bundle size, and degrade tree shaking.
 * Paths: **/*.ts, **/*.tsx
 * Languages: typescript
-* Max blast radius lines: 30
 
 ### [ts-floating-promises-002] (Enforcement: reject_diff)
 * Statement: Asynchronous promises must be awaited, returned to the caller, or explicitly handled with a .catch() callback or void operator.
@@ -236,7 +214,6 @@ Universal agent instructions: these machine-enforced repository invariants apply
 * Strictly Forbidden: leaving asynchronous promises floating without await or .catch()
 * Paths: **/*.ts, **/*.tsx
 * Languages: typescript
-* Max blast radius lines: 30
 
 ### [ts-no-any-001] (Enforcement: reject_diff)
 * Statement: TypeScript variables, parameters, and return types must avoid explicit 'any'; use 'unknown', union types, generic constraints, or explicit interfaces instead.
@@ -245,14 +222,13 @@ Universal agent instructions: these machine-enforced repository invariants apply
 * Strictly Forbidden: declaring variables, parameters, or return types as explicit 'any'
 * Paths: **/*.ts, **/*.tsx
 * Languages: typescript
-* Max blast radius lines: 30
 
 ## Proactive Guardrail Memory: Recent Interceptions
 The following failure modes were recently intercepted by repository barriers.
 Ensure your implementation proactively avoids these exact patterns:
-* Intercepted [fastapi-pydantic-001] in src/aos/matcher.py: Violation of 'fastapi-pydantic-001': Content exceeds maximum blast radius of 30 lines (152 lines detected).
-* Intercepted [team-agents-md-rule-3] in src/aos/matcher.py: Violation of 'team-agents-md-rule-3': Content exceeds maximum blast radius of 30 lines (152 lines detected).
-* Intercepted [team-agents-md-rule-1] in src/aos/matcher.py: Violation of 'team-agents-md-rule-1': Content exceeds maximum blast radius of 30 lines (152 lines detected).
-* Intercepted [sec-ssrf-prevention-001] in src/aos/matcher.py: Violation of 'sec-ssrf-prevention-001': Content exceeds maximum blast radius of 30 lines (152 lines detected).
-* Intercepted [sec-sql-injection-001] in src/aos/matcher.py: Violation of 'sec-sql-injection-001': Content exceeds maximum blast radius of 30 lines (152 lines detected).
+* Intercepted [cand-promo-01]: Preserve explicit types in signatures.
+* Intercepted [py-async-no-blocking-io-003]: Asynchronous functions (async def) must not invoke synchronous blocking I/O calls such as time.sleep, synchronous requests, or blocking filesystem operations.
+* Intercepted [py-no-bare-except-002]: Catching Exception or bare except blocks must not silently suppress errors with pass; catch specific exception classes and log or re-raise errors.
+* Intercepted [py-structured-logging-001]: Application, service, and core library code must use structured logging frameworks rather than standard print statements.
+* Intercepted [py-no-wildcard-import-002]: Wildcard imports ('from module import *') are prohibited; all imported symbols must be explicitly named or imported via the module namespace.
 <!-- AOS_INVARIANTS_END -->

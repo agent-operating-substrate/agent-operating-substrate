@@ -15,7 +15,6 @@ invariant:
   rationale: Insecure deserialization and arbitrary eval calls allow attackers to
     execute arbitrary code via gadget chains and dynamic interpretation.
   enforcement: reject_diff
-  max_blast_radius_lines: 30
 provenance:
   incident_id: pack-security-core
   git_commit: HEAD

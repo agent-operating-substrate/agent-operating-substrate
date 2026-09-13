@@ -12,7 +12,6 @@ invariant:
   rationale: Static typing prevents runtime errors and provides clear machine-readable
     contracts for AI coding agents.
   enforcement: warn
-  max_blast_radius_lines: 30
 provenance:
   incident_id: pack-python-clean-architecture
   git_commit: HEAD

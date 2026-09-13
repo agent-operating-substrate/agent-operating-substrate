@@ -14,7 +14,6 @@ invariant:
   rationale: The 'any' type disables compiler type checking, concealing potential
     runtime type errors and eliminating editor refactoring safety.
   enforcement: reject_diff
-  max_blast_radius_lines: 30
 provenance:
   incident_id: pack-typescript-core
   git_commit: HEAD

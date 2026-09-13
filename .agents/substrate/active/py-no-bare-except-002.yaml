@@ -12,7 +12,6 @@ invariant:
   rationale: Silent exception swallowing hides fatal runtime errors, interrupts, and
     bugs, making forensic debugging and root-cause analysis impossible.
   enforcement: reject_diff
-  max_blast_radius_lines: 30
 provenance:
   incident_id: pack-python-core
   git_commit: HEAD

@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="100%" height="100%">
+  <defs>
+    <linearGradient id="favGradCyanEmerald" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06b6d4"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
+    <linearGradient id="favShieldLeft" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <linearGradient id="favShieldRight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#0891b2"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Hexagonal Substrate Base -->
+  <polygon points="64,7 113.5,35.5 113.5,92.5 64,121 14.5,92.5 14.5,35.5" fill="#0b0f19" stroke="url(#favGradCyanEmerald)" stroke-width="4" stroke-linejoin="round"/>
+
+  <!-- Inner Crystalline Frame -->
+  <polygon points="64,26 97,45 97,83 64,102 31,83 31,45" fill="#0f172a" stroke="#06b6d4" stroke-width="2" stroke-opacity="0.6" stroke-linejoin="round"/>
+
+  <!-- Central Behavior Firewall Shield -->
+  <g>
+    <!-- Left Facet -->
+    <path d="M 64,40 L 46,48 L 46,72 L 64,92 Z" fill="url(#favShieldLeft)"/>
+    <!-- Right Facet -->
+    <path d="M 64,40 L 82,48 L 82,72 L 64,92 Z" fill="url(#favShieldRight)"/>
+    <!-- Shield Rim -->
+    <path d="M 64,40 L 82,48 L 82,72 L 64,92 L 46,72 L 46,48 Z" fill="none" stroke="#f8fafc" stroke-width="2.5" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Inscribed Memory Node -->
+  <polygon points="64,58 71,66 64,74 57,66" fill="#f8fafc"/>
+  <circle cx="64" cy="66" r="2" fill="#0b0f19"/>
+</svg>
