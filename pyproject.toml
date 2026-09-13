@@ -9,7 +9,7 @@ description = "Autonomous behavior firewall, stigmergic runtime, and permanent m
 readme = "README.md"
 license = "MIT"
 authors = [
-    {name = "AOS Agent", email = "aos-agent-maintainer-a4d93332@uberip.com"}
+    {name = "AOS Agent", email = "aos-agent-maintainer@proton.me"}
 ]
 keywords = [
     "agents",
