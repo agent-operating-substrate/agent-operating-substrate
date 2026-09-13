@@ -1,0 +1,20 @@
+id: team-agents-md-rule-1
+version: 1
+status: active
+scope:
+  paths:
+  - '**/*'
+  languages: []
+invariant:
+  statement: Touch only lines strictly required to complete the assigned task.
+  rationale: Extracted from team repository instructions in AGENTS.md.
+  enforcement: reject_diff
+  max_blast_radius_lines: 30
+provenance:
+  incident_id: ingest-1789282836
+  git_commit: HEAD
+  inscribing_agent: repo-ingestion-engine
+  created_at: '2026-09-13T07:00:36Z'
+  last_verified_at: '2026-09-13T07:00:36Z'
+  trigger_count: 1
+  peer_consensus_agent: repo-ingestion-engine
