@@ -4,12 +4,17 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agent-operating-substrate"
-version = "0.1.0"
+version = "0.2.0"
 description = "Autonomous behavior firewall, vendor-agnostic control plane, and permanent memory across Gemini, Claude, Codex, Copilot, Cursor, and Windsurf"
 readme = "README.md"
 license = "MIT"
 authors = [
-    {name = "AOS Agent", email = "aos-agent-maintainer@proton.me"}
+    {name = "AOS Agent", email = "aos-agent-maintainer@proton.me"},
+    {name = "agent-operating-substrate-agent[bot]", email = "328717801+agent-operating-substrate-agent@users.noreply.github.com"}
+]
+maintainers = [
+    {name = "AOS Agent", email = "aos-agent-maintainer@proton.me"},
+    {name = "agent-operating-substrate-agent[bot]", email = "328717801+agent-operating-substrate-agent@users.noreply.github.com"}
 ]
 keywords = [
     "agents",
@@ -58,10 +63,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/aos-agent/agent-operating-substrate"
-Documentation = "https://aos-agent.github.io/agent-operating-substrate/"
-Repository = "https://github.com/aos-agent/agent-operating-substrate.git"
-Issues = "https://github.com/aos-agent/agent-operating-substrate/issues"
+Homepage = "https://github.com/agent-operating-substrate/agent-operating-substrate"
+Documentation = "https://agent-operating-substrate.github.io/agent-operating-substrate/"
+Repository = "https://github.com/agent-operating-substrate/agent-operating-substrate.git"
+Issues = "https://github.com/agent-operating-substrate/agent-operating-substrate/issues"
 
 [project.scripts]
 aos = "aos.cli:main"

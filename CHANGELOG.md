@@ -5,6 +5,19 @@ This project adheres to Semantic Versioning.
 
 ***
 
+## [0.2.0] - 2026-09-13
+
+### Universal AI Vendor Abstraction Release
+
+#### Added
+* **Universal AI Vendor Abstraction Layer**: Support for Google Gemini (GEMINI.md, .gemini/instructions.md), OpenAI Codex and ChatGPT (CODEX.md, .openai/instructions.md), Aider (CONVENTIONS.md), Roo Code and Cline (.clinerules, .roomodes), and Amazon Q Developer (.amazonq/rules.md).
+* **Automated Bot Identity and Attribution**: Cryptographic token minting and git credential helper for verified agent-operating-substrate-agent[bot] commits.
+* **Official MIT License**: Added MIT LICENSE to root repository and VS Code extension distribution packaging.
+* **Playwright CI Graceful Fallback**: Automated detection and graceful skipping when browser binaries are absent in headless container environments.
+* **PyPI Publish Resilience**: Added skip-existing configuration to prevent distribution pipeline conflicts.
+
+***
+
 ## [0.1.0] - 2026-09-13
 
 ### Initial Release: The Autonomous Behavior Firewall and Permanent Memory Substrate

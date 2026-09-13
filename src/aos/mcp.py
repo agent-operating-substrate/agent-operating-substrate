@@ -155,7 +155,7 @@ def run_mcp_server(root_dir: Path | str = ".") -> None:
                 "result": {
                     "protocolVersion": PROTOCOL_VERSION,
                     "capabilities": {"tools": {}},
-                    "serverInfo": {"name": "aos-mcp-server", "version": "0.1.0"},
+                    "serverInfo": {"name": "aos-mcp-server", "version": "0.2.0"},
                 },
             }
         elif method == "tools/list":
