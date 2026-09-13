@@ -148,6 +148,16 @@ def test_cli_ingest_command(tmp_path: Path, monkeypatch, capsys):
     assert "as active:" in captured_prom
 
 
+def test_ingest_with_recommended_packs(tmp_path: Path):
+    (tmp_path / "pyproject.toml").write_text("[project]\nname = 'test'\n", encoding="utf-8")
+    report = ingest_repository(tmp_path, auto_promote=True, install_recommended_packs=True)
+    assert "python-core" in report.recommended_packs
+
+    active_dir = tmp_path / ".agents" / "substrate" / "active"
+    assert (active_dir / "py-no-wildcard-import-002.yaml").is_file()
+    assert (active_dir / "sec-no-secrets-001.yaml").is_file()
+
+
 def test_zero_em_dashes_in_ingest_files():
     ingest_code = Path("src/aos/ingest.py").read_text(encoding="utf-8")
     test_code = Path("tests/test_ingest.py").read_text(encoding="utf-8")

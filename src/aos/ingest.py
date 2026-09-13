@@ -21,6 +21,7 @@ class IngestionReport:
     scanned_config_files: list[str] = field(default_factory=list)
     existing_instruction_files: list[str] = field(default_factory=list)
     synthesized_rules: list[dict[str, Any]] = field(default_factory=list)
+    recommended_packs: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -28,6 +29,7 @@ class IngestionReport:
             "detected_frameworks": self.detected_frameworks,
             "scanned_config_files": self.scanned_config_files,
             "existing_instruction_files": self.existing_instruction_files,
+            "recommended_packs": self.recommended_packs,
             "synthesized_rules_count": len(self.synthesized_rules),
             "synthesized_rules": self.synthesized_rules,
         }
@@ -193,6 +195,8 @@ def scan_repository_conventions(root_dir: Path | str = ".") -> IngestionReport:
             except Exception:
                 pass
 
+    from aos.packs import recommend_packs
+    report.recommended_packs = recommend_packs(root_dir=root)
     report.synthesized_rules = detected_rules
     return report
 
@@ -200,6 +204,7 @@ def scan_repository_conventions(root_dir: Path | str = ".") -> IngestionReport:
 def ingest_repository(
     root_dir: Path | str = ".",
     auto_promote: bool = False,
+    install_recommended_packs: bool = False,
 ) -> IngestionReport:
     """Scan repository conventions and inscribe synthesized invariants into the substrate."""
     root = Path(root_dir)
@@ -221,6 +226,11 @@ def ingest_repository(
         inscribe_candidate(candidate, substrate_dir=sub_dir)
         if auto_promote:
             promote_candidate(candidate.id, peer_agent="repo-ingestion-engine", substrate_dir=sub_dir)
+
+    if install_recommended_packs:
+        from aos.packs import install_pack
+        for p in report.recommended_packs:
+            install_pack(p, root_dir=root, promote=auto_promote)
 
     post_event(
         {
