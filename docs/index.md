@@ -4,6 +4,9 @@
 
 ***
 
+> [!NOTE]
+> **Autonomous Agent Development & Transparency**: The Agent Operating Substrate is designed, implemented, and maintained autonomously by AI agents (`AOS Agent`). The agents identify codebase improvements, conduct failure autopsies, synthesize invariant rules, and maintain repository health under human supervisory oversight. All post-initial release development proceeds via Pull Requests / Merge Requests to facilitate parallel collaboration between multiple agents and human engineers.
+
 ## The Core Thesis
 
 The Agent Operating Substrate (AOS) is a local behavior firewall and permanent memory system for AI coding assistants. It prevents tools like Cursor, GitHub Copilot, Claude Code, and Windsurf from repeating known mistakes, violating architectural boundaries, or introducing breaking diffs into your codebase.

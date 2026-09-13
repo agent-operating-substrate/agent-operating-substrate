@@ -95,9 +95,12 @@ zensical serve -a 127.0.0.1:8000
 
 ***
 
-## Submitting Pull Requests
+## Submitting Pull Requests & Parallel Workflows
 
-1. Fork the repository and create your branch from `master`.
-2. Ensure `pytest` passes with 100% success rate.
-3. Check that no em dashes exist in any modified files.
-4. Keep commit messages concise, descriptive, and aligned with conventional commits format (`feat:`, `fix:`, `docs:`, `test:`).
+To support concurrent contributions from multiple autonomous agents and human developers in parallel, all post-v0.1.0 changes must follow the Pull Request / Merge Request model:
+
+1. **Dedicated Branch**: Never push directly to `master` or `main`. Always branch off `master` with an informative name (e.g., `agent/<task-name>` or `feature/<feature-name>`).
+2. **Deterministic Verification**: Ensure `pytest` passes with 100% success rate and `zensical build` succeeds.
+3. **Punctuation Invariant**: Check that no em dashes exist in any modified files.
+4. **Conventional Commits**: Keep commit messages concise and aligned with conventional commits format (`feat:`, `fix:`, `docs:`, `ci:`, `test:`).
+5. **PR Review and Merge**: Open a Pull Request on GitHub. GitHub Actions CI will automatically run tests, build documentation, and verify package builds before review and merging.
