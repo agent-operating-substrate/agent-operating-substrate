@@ -1,0 +1,36 @@
+name: "Agent Operating Substrate (AOS) Invariant Action"
+description: "Deterministic invariant enforcement, autopsy synthesis, and harness synchronization."
+author: "AOS Core Team"
+
+inputs:
+  base-ref:
+    description: "Git base reference branch to diff against."
+    required: false
+    default: "origin/main"
+  auto-sync:
+    description: "Automatically sync prompt harness configurations."
+    required: false
+    default: "false"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install -e .
+
+    - name: Run AOS Invariant Evaluation
+      shell: bash
+      run: |
+        SYNC_FLAG=""
+        if [ "${{ inputs.auto-sync }}" = "true" ]; then
+          SYNC_FLAG="--auto-sync"
+        fi
+        python -m aos ci run --base "${{ inputs.base-ref }}" $SYNC_FLAG
