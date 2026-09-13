@@ -235,7 +235,8 @@ def test_api_harnesses(test_server: str):
     assert ".windsurfrules" in data
     assert ".github/copilot-instructions.md" in data
     assert ".git/hooks/pre-commit" in data
-    assert len(data["harnesses"]) == 5
+    assert ".github/workflows/aos-guardrails.yml" in data
+    assert len(data["harnesses"]) == 6
 
 
 def test_api_harnesses_sync(test_server: str, test_env: Path):
@@ -621,6 +622,42 @@ def test_api_fix_content(test_server: str):
     assert "fixed_content" in data
     assert "from os import *" not in data["fixed_content"]
     assert "import os" in data["fixed_content"]
+
+
+def test_api_rules_promote(test_server: str, test_env: Path):
+    from aos.autopsy import inscribe_candidate, synthesize_candidate_rule
+
+    cand = synthesize_candidate_rule(
+        rule_id="cand-promo-01",
+        statement="Preserve explicit types in signatures.",
+        rationale="Type safety.",
+        paths=["**/*.py"],
+        languages=["python"],
+    )
+    inscribe_candidate(cand, substrate_dir=test_env / ".agents" / "substrate")
+    cand_file = test_env / ".agents" / "substrate" / "candidate" / "cand-promo-01.yaml"
+    assert cand_file.is_file()
+
+    status, data = http_post(f"{test_server}/api/rules/promote", {"rule_id": "cand-promo-01"})
+    assert status == 200
+    assert data["success"] is True
+    assert not cand_file.exists()
+    active_file = test_env / ".agents" / "substrate" / "active" / "cand-promo-01.yaml"
+    assert active_file.is_file()
+
+
+def test_api_ci_endpoints(test_server: str, test_env: Path):
+    status, data = http_post(f"{test_server}/api/ci/install", {})
+    assert status == 200
+    assert data["success"] is True
+    wf_file = test_env / ".github" / "workflows" / "aos-guardrails.yml"
+    assert wf_file.is_file()
+
+    status_un, data_un = http_post(f"{test_server}/api/ci/uninstall", {})
+    assert status_un == 200
+    assert data_un["success"] is True
+    assert not wf_file.exists()
+
 
 
 
