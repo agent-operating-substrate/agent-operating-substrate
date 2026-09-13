@@ -72,13 +72,14 @@ Enforces high-maintainability Python standards, clean separation of concerns, an
 
 ***
 
-### 3. `performance-simd`
-Guards high-performance computing, numerical kernels, and low-latency systems against common memory alignment faults and allocation overhead.
+### 3. `general-hygiene` (Universal Repository Health)
+Enforces dependency manifest synchronization, prevents committing local environment credentials or build caches, and limits agent blast radius.
 
 | Rule ID | Statement | Rationale | Enforcement | Scope |
 | :--- | :--- | :--- | :--- | :--- |
-| **`perf-avx-align-001`** | PointBuffer structures passed to AVX2/AVX-512 kernels must be aligned to 32-byte boundaries. | Unaligned memory loads trigger general protection faults under high-throughput vector execution. | `reject_diff` | `src/geometry/simd/**`, `include/geometry/simd/**` (C++, CUDA) |
-| **`perf-zero-copy-002`** | High-throughput streaming loops and packet parsers must operate on memory views or slices without heap reallocations. | Intermediate buffer allocations degrade cache locality and introduce latency spikes in hot execution paths. | `warn` | `src/**/streaming/**`, `src/**/simd/**` (Python, C++, Rust) |
+| **`gh-deps-sync-001`** | Changes to package dependency manifests must include synchronized updates to corresponding lockfiles. | Desynchronized dependency manifests and lockfiles cause irreproducible builds and unexpected environment drift. | `reject_diff` | `package.json`, `pyproject.toml`, `Cargo.toml`, `go.mod` |
+| **`gh-no-artifacts-credentials-002`** | Build artifacts, compiled binaries, bytecode, local environment configuration files (.env), and IDE directories must not be committed. | Committing build outputs and local environment files bloats repository history and leaks local configuration secrets. | `reject_diff` | `**/*` |
+| **`gh-blast-radius-limit-003`** | Automated agent changes must maintain surgical precision by touching only required lines within 50 lines. | Enforces surgical diff discipline to ensure modifications are reviewable and verifiable. | `reject_diff` | `**/*` |
 
 ***
 
