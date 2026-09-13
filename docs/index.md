@@ -1,6 +1,6 @@
 # Agent Operating Substrate (AOS)
 
-### The Autonomous Behavior Firewall & Permanent Memory for Cursor, Copilot, and Claude Code.
+### The Universal AI Behavior Firewall & Vendor-Agnostic Control Plane across Gemini, Claude, Codex, Copilot, Cursor, and Windsurf.
 
 ***
 
@@ -9,11 +9,11 @@
 
 ## The Core Thesis
 
-The Agent Operating Substrate (AOS) is a local behavior firewall and permanent memory system for AI coding assistants. It prevents tools like Cursor, GitHub Copilot, Claude Code, and Windsurf from repeating known mistakes, violating architectural boundaries, or introducing breaking diffs into your codebase.
+The Agent Operating Substrate (AOS) is a local behavior firewall and vendor-agnostic memory layer for AI coding assistants. Whether your team prompts Google Gemini 1.5 Pro, Anthropic Claude 3.5 Sonnet, OpenAI Codex / GPT-4o, Amazon Q Developer, or local DeepSeek and Llama models, AOS prevents agents from repeating known mistakes, violating architectural boundaries, or introducing breaking diffs into your codebase.
 
-Modern software engineering agents produce code with unprecedented velocity. Yet engineering teams deploying autonomous agents in production face a persistent hidden cost: **the AI Babysitting Tax**.
+Modern software engineering agents produce code with unprecedented velocity. Yet engineering teams deploying autonomous agents in production face two compounding bottlenecks: **AI Vendor Lock-in** and **the AI Babysitting Tax**.
 
-Left unconstrained, coding agents routinely hit two structural failure modes:
+Left unconstrained, coding agents routinely hit three structural failure modes:
 
 ### 1. Agent Amnesia (Day-One Goldfish Memory)
 Every agent invocation begins from a completely blank slate. When an agent violates an architectural invariant, introduces memory misalignment, or breaks an unspoken convention, an engineer must manually diagnose the issue and re-prompt the model.
@@ -24,6 +24,9 @@ The moment that chat session terminates or the context window rolls over, the ha
 Multi-agent workflows remain strictly hub-and-spoke. Engineers are forced into manual dispatcher roles: prompting Agent A to draft a patch, copying the diff to Agent B for review, piping test traces to Agent C for debugging, and arbitrating conflicts by hand.
 
 This constant manual routing creates cognitive exhaustion and prevents engineering organizations from achieving true agent autonomy.
+
+### 3. Model Drift and Vendor Lock-in
+Engineering teams cannot afford to tie repository safety to a single model provider. When models update or teams switch between Gemini, Claude, Codex, or local open-weights LLMs, unstructured natural language prompts drift, rules get silently bypassed, and regressions resurface.
 
 ```
 Traditional Hub-and-Spoke (Fragile, Manual, High Babysitting Tax):
@@ -271,6 +274,7 @@ AOS Enterprise Fleet Synchronization connects independent repositories into an i
 ## Next Steps
 
 * [Getting Started](getting-started.md): Complete setup, harness synchronization, and MCP configuration.
+* [AI Vendor Abstraction](vendor-abstraction.md): Decoupling repository invariants and control planes from LLM providers.
 * [IDE & Tool Integration](ide-integration.md): Step-by-step guides for Cursor, Claude Code, Copilot, Windsurf, and Git pre-commit hooks.
 * [Control Plane Web Dashboard](control-plane-ui.md): Visual tour of real-time guardrail controls and diff testing.
 * [Curated Rule Packs](rule-packs.md): Battle-tested security, architecture, and performance invariant packs.

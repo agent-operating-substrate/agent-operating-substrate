@@ -7,6 +7,7 @@ copyright = "Copyright &copy; 2026 Agent Operating Substrate Team"
 nav = [
   { "Home" = "index.md" },
   { "Getting Started" = "getting-started.md" },
+  { "Vendor Abstraction" = "vendor-abstraction.md" },
   { "IDE & Tool Integration" = "ide-integration.md" },
   { "Control Plane Web Dashboard" = "control-plane-ui.md" },
   { "Curated Rule Packs" = "rule-packs.md" },

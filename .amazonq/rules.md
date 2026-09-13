@@ -1,8 +1,8 @@
 <!-- AOS_INVARIANTS_START -->
-# Claude Code Instructions
+# Amazon Q Developer Rules
 
 ## Active Substrate Invariants (Machine-Enforced)
-Claude Code CLI instructions: you must strictly obey these machine-enforced repository invariants:
+Amazon Q Developer instructions: strictly obey the following machine-enforced repository invariants for all code suggestions:
 
 ### [aos-deps-003] (Enforcement: reject_diff)
 * Statement: Build with minimal code. Avoid speculative abstractions. Favor local file primitives (JSON, YAML, SQLite) over complex external infrastructure. Do not introduce dependencies unless strictly necessary.

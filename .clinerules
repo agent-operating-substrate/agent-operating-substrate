@@ -1,8 +1,8 @@
 <!-- AOS_INVARIANTS_START -->
-# Claude Code Instructions
+# Cline System Rules & Invariants
 
 ## Active Substrate Invariants (Machine-Enforced)
-Claude Code CLI instructions: you must strictly obey these machine-enforced repository invariants:
+Autonomous agent instructions for Cline: you must strictly comply with the following machine-enforced repository invariants:
 
 ### [aos-deps-003] (Enforcement: reject_diff)
 * Statement: Build with minimal code. Avoid speculative abstractions. Favor local file primitives (JSON, YAML, SQLite) over complex external infrastructure. Do not introduce dependencies unless strictly necessary.

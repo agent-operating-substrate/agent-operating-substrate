@@ -236,7 +236,16 @@ def test_api_harnesses(test_server: str):
     assert ".github/copilot-instructions.md" in data
     assert ".git/hooks/pre-commit" in data
     assert ".github/workflows/aos-guardrails.yml" in data
-    assert len(data["harnesses"]) == 6
+    assert ".gemini/instructions.md" in data
+    assert "GEMINI.md" in data
+    assert ".openai/instructions.md" in data
+    assert "CODEX.md" in data
+    assert "CONVENTIONS.md" in data
+    assert ".clinerules" in data
+    assert ".roomodes" in data
+    assert ".amazonq/rules.md" in data
+    assert "AGENTS.md" in data
+    assert len(data["harnesses"]) == 16
 
 
 def test_api_harnesses_sync(test_server: str, test_env: Path):
@@ -437,6 +446,16 @@ def test_api_harnesses_view(test_server: str):
     status, data = http_get(f"{test_server}/api/harnesses/view?id=claude")
     assert status == 200
     assert data["path"] == "CLAUDE.md"
+
+    # Gemini view
+    status, data = http_get(f"{test_server}/api/harnesses/view?id=gemini")
+    assert status == 200
+    assert data["path"] == ".gemini/instructions.md"
+
+    # Amazon Q view
+    status, data = http_get(f"{test_server}/api/harnesses/view?id=amazonq")
+    assert status == 200
+    assert data["path"] == ".amazonq/rules.md"
 
     # Unknown harness
     status_bad, data_bad = http_get(f"{test_server}/api/harnesses/view?id=unknown-tool")

@@ -3,10 +3,6 @@ name: Deploy Documentation to GitHub Pages
 on:
   push:
     branches: [ master, main ]
-    paths:
-      - "docs/**"
-      - "zensical.toml"
-      - ".github/workflows/pages.yml"
   workflow_dispatch:
 
 permissions:

@@ -1,8 +1,8 @@
 <!-- AOS_INVARIANTS_START -->
-# Claude Code Instructions
+# OpenAI Codex & ChatGPT Developer Instructions
 
 ## Active Substrate Invariants (Machine-Enforced)
-Claude Code CLI instructions: you must strictly obey these machine-enforced repository invariants:
+You are OpenAI Codex / ChatGPT developer assistant. You must strictly adhere to the following machine-enforced repository invariants:
 
 ### [aos-deps-003] (Enforcement: reject_diff)
 * Statement: Build with minimal code. Avoid speculative abstractions. Favor local file primitives (JSON, YAML, SQLite) over complex external infrastructure. Do not introduce dependencies unless strictly necessary.

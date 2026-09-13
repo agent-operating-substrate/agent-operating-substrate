@@ -499,6 +499,18 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       align-items: center;
       margin-bottom: 10px;
     }
+    .tool-icon {
+      font-size: 16px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+    }
     .tool-name {
       font-size: 15px;
       font-weight: 700;
@@ -902,7 +914,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     </div>
     <div class="stat-card">
       <div class="label">Connected AI Tools</div>
-      <div class="value" id="count-harnesses">0 / 5</div>
+      <div class="value" id="count-harnesses">0 / 16</div>
       <div class="subtext" id="count-harnesses-sub">Prompt targets and git hooks</div>
     </div>
     <div class="stat-card">
@@ -1334,7 +1346,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
         document.getElementById('count-active').innerText = activeCount;
         document.getElementById('count-active-sub').innerText = `${data.candidate_rules || 0} candidate, ${data.archived_rules || 0} archived`;
-        document.getElementById('count-harnesses').innerText = `${harnessesCount} / ${data.total_harnesses || 5}`;
+        document.getElementById('count-harnesses').innerText = `${harnessesCount} / ${data.total_harnesses || 16}`;
         document.getElementById('count-blocked').innerText = blockedCount;
 
         updateTabBadges(activeCount, harnessesCount, blockedCount);
@@ -1674,7 +1686,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             ? '<span class="badge badge-active">CONNECTED</span>'
             : '<span class="badge badge-archive">MISSING / UNCONFIGURED</span>';
 
-          let actionBtn = `<button class="btn btn-sm" onclick="syncAllHarnesses()">Sync Instructions</button>`;
+          let actionBtn = `<button class="btn btn-sm" onclick="syncHarness('${h.id}')">${h.exists ? 'Re-sync' : 'Sync Target'}</button>`;
           if (h.id === 'git_hook') {
             actionBtn = `<button class="btn btn-sm" onclick="installGitHook()">${h.exists ? 'Re-install Hook' : 'Install Git Hook'}</button>`;
           } else if (h.id === 'github_actions') {
@@ -1685,11 +1697,14 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             <div class="tool-card">
               <div>
                 <div class="tool-header">
-                  <span class="tool-name">${h.name}</span>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="tool-icon">${h.icon || '🤖'}</span>
+                    <span class="tool-name">${escapeHtml(h.name)}</span>
+                  </div>
                   ${statusBadge}
                 </div>
-                <div class="tool-path">${h.path}</div>
-                <div class="tool-desc">${h.description}</div>
+                <div class="tool-path">${escapeHtml(h.path)}</div>
+                <div class="tool-desc">${escapeHtml(h.description)}</div>
               </div>
               <div style="margin-top: 14px; display: flex; justify-content: flex-end; gap: 8px;">
                 <button class="btn btn-sm" onclick="viewHarnessConfig('${h.id}', '${escapeHtml(h.name)}', '${escapeHtml(h.path)}')">View Config</button>
@@ -1700,6 +1715,28 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         }).join('');
       } catch (err) {
         console.error('Failed to load harnesses:', err);
+      }
+    }
+
+    async function syncHarness(toolId) {
+      try {
+        const res = await fetch('/api/harnesses/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ harness: toolId }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          const names = data.targets && data.targets.length ? data.targets.join(', ') : toolId;
+          showToast(`Synchronized ${names} configuration.`, 'success');
+          await loadHarnesses();
+          await loadOverview();
+        } else {
+          showToast('Failed to sync harness', 'error');
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Network error during sync', 'error');
       }
     }
 
@@ -2346,6 +2383,26 @@ def _get_substrate_dir(root: Path) -> Path:
     return root / ".agents" / "substrate"
 
 
+HARNESS_SPECS = [
+    ("cursor", "Cursor IDE", ".cursorrules", "Cursor", "▶", "Rules injected into Cursor Composer and Chat instructions."),
+    ("cursor_mdc", "Cursor Rules (MDC)", ".cursor/rules/aos-invariants.mdc", "Cursor", "▶", "Machine-enforced rules for Cursor MDC indexing."),
+    ("claude", "Claude Code", "CLAUDE.md", "Claude Code", "🟣", "Repository instructions loaded automatically by Claude Code CLI."),
+    ("copilot", "GitHub Copilot", ".github/copilot-instructions.md", "GitHub Copilot", "🐙", "Repository-wide instructions for GitHub Copilot Chat."),
+    ("windsurf", "Windsurf IDE", ".windsurfrules", "Windsurf", "🏄", "System prompt instructions for Windsurf Cascade agent."),
+    ("gemini", "Google Gemini & Antigravity", ".gemini/instructions.md", "Gemini", "✦", "Project instructions for Gemini Code Assist and Antigravity."),
+    ("gemini_root", "Google Gemini (Root)", "GEMINI.md", "Gemini", "✦", "Root instructions file for Gemini CLI and Antigravity agents."),
+    ("codex", "OpenAI Codex & ChatGPT", ".openai/instructions.md", "OpenAI Codex", "⚡", "Project instructions for OpenAI Codex and ChatGPT Developer mode."),
+    ("codex_root", "OpenAI Codex (Root)", "CODEX.md", "OpenAI Codex", "⚡", "Root instruction file for OpenAI Codex and custom GPT agents."),
+    ("aider", "Aider Pairing Assistant", "CONVENTIONS.md", "Aider", "🤝", "Conventions file automatically loaded by Aider CLI."),
+    ("cline", "Cline Autonomous Agent", ".clinerules", "Cline", "🤖", "System prompt rules for Cline autonomous coding assistant."),
+    ("roo", "Roo Code Autonomous Agent", ".roomodes", "Roo Code", "🦘", "System invariants and mode rules for Roo Code."),
+    ("amazonq", "Amazon Q Developer", ".amazonq/rules.md", "Amazon Q", "☁", "Project coding rules for Amazon Q Developer."),
+    ("agents", "Universal Agent Standard", "AGENTS.md", "Universal Agent", "🌐", "Universal multi-agent operating guidelines and invariants."),
+    ("git_hook", "Git Pre-Commit Hook", ".git/hooks/pre-commit", "Git Hook", "🪝", "Deterministic enforcement barrier preventing violation commits."),
+    ("github_actions", "GitHub Actions Guardrail", ".github/workflows/aos-guardrails.yml", "GitHub Actions", "🚀", "Continuous integration barrier verifying invariants on pull requests."),
+]
+
+
 def _get_overview_data(root: Path) -> dict[str, Any]:
     sub_dir = _get_substrate_dir(root)
     rules, _ = discover_rules(sub_dir)
@@ -2353,14 +2410,9 @@ def _get_overview_data(root: Path) -> dict[str, Any]:
     candidate_count = sum(1 for r in rules if r.status == "candidate")
     archived_count = sum(1 for r in rules if r.status == "archive")
 
-    monitored_paths = [
-        ".cursorrules",
-        ".windsurfrules",
-        ".github/copilot-instructions.md",
-        ".git/hooks/pre-commit",
-        "CLAUDE.md",
-    ]
-    connected_count = sum(1 for p in monitored_paths if (root / p).is_file())
+    h_data = _get_harnesses_data(root)
+    connected_count = h_data["connected_count"]
+    total_harnesses = h_data["total_count"]
 
     events = read_events(root_dir=root)
     blocked_incidents = [
@@ -2376,7 +2428,7 @@ def _get_overview_data(root: Path) -> dict[str, Any]:
         "archived_rules": archived_count,
         "total_rules": len(rules),
         "connected_harnesses": connected_count,
-        "total_harnesses": len(monitored_paths),
+        "total_harnesses": total_harnesses,
         "total_blocked_incidents": total_blocked,
         "blocked_incidents": total_blocked,
     }
@@ -2385,53 +2437,15 @@ def _get_overview_data(root: Path) -> dict[str, Any]:
 def _get_harnesses_data(root: Path) -> dict[str, Any]:
     harnesses = [
         {
-            "id": "cursor",
-            "name": "Cursor IDE",
-            "path": ".cursorrules",
-            "exists": (root / ".cursorrules").is_file(),
-            "tool": "Cursor",
-            "description": "Rules injected into Cursor Composer and Chat instructions.",
-        },
-        {
-            "id": "claude",
-            "name": "Claude Code",
-            "path": "CLAUDE.md",
-            "exists": (root / "CLAUDE.md").is_file(),
-            "tool": "Claude Code",
-            "description": "Repository instructions loaded automatically by Claude Code CLI.",
-        },
-        {
-            "id": "copilot",
-            "name": "GitHub Copilot",
-            "path": ".github/copilot-instructions.md",
-            "exists": (root / ".github" / "copilot-instructions.md").is_file(),
-            "tool": "GitHub Copilot",
-            "description": "Repository-wide instructions for GitHub Copilot Chat.",
-        },
-        {
-            "id": "windsurf",
-            "name": "Windsurf IDE",
-            "path": ".windsurfrules",
-            "exists": (root / ".windsurfrules").is_file(),
-            "tool": "Windsurf",
-            "description": "System prompt instructions for Windsurf Cascade agent.",
-        },
-        {
-            "id": "git_hook",
-            "name": "Git Pre-Commit Hook",
-            "path": ".git/hooks/pre-commit",
-            "exists": (root / ".git" / "hooks" / "pre-commit").is_file(),
-            "tool": "Git Hook",
-            "description": "Deterministic enforcement barrier preventing violation commits.",
-        },
-        {
-            "id": "github_actions",
-            "name": "GitHub Actions Guardrail",
-            "path": ".github/workflows/aos-guardrails.yml",
-            "exists": (root / ".github" / "workflows" / "aos-guardrails.yml").is_file(),
-            "tool": "GitHub Actions",
-            "description": "Continuous integration barrier verifying invariants on pull requests.",
-        },
+            "id": hid,
+            "name": name,
+            "path": path,
+            "exists": (root / Path(path)).is_file(),
+            "tool": tool,
+            "icon": icon,
+            "description": desc,
+        }
+        for hid, name, path, tool, icon, desc in HARNESS_SPECS
     ]
     connected = sum(1 for h in harnesses if h["exists"])
     data: dict[str, Any] = {
@@ -2694,20 +2708,12 @@ def _get_incidents(root: Path) -> list[dict[str, Any]]:
     return incidents
 
 
-def _sync_all_harnesses(root: Path) -> dict[str, Any]:
-    synced = sync_harnesses(root_dir=root)
-    engine = RuleEngine(root_dir=root)
-    active_rules = engine.get_rules(status="active")
-    rendered = format_rules_for_prompt(active_rules)
-
-    claude_file = root / "CLAUDE.md"
-    if claude_file.exists():
-        inject_into_file(claude_file, rendered)
-        synced["claude"] = claude_file
-
+def _sync_all_harnesses(root: Path, harnesses: Optional[list[str]] = None) -> dict[str, Any]:
+    synced = sync_harnesses(root_dir=root, harnesses=harnesses)
     return {
         "success": True,
         "synced": [str(p) for p in synced.values()],
+        "targets": list(synced.keys()),
         "count": len(synced),
     }
 
@@ -2786,14 +2792,7 @@ def _get_rule_yaml(root: Path, rule_id: str) -> tuple[int, dict[str, Any]]:
 
 
 def _get_harness_view(root: Path, tool_id: str) -> tuple[int, dict[str, Any]]:
-    tool_map = {
-        "cursor": (".cursorrules", "Cursor IDE"),
-        "claude": ("CLAUDE.md", "Claude Code"),
-        "copilot": (".github/copilot-instructions.md", "GitHub Copilot"),
-        "windsurf": (".windsurfrules", "Windsurf IDE"),
-        "git_hook": (".git/hooks/pre-commit", "Git Pre-Commit Hook"),
-        "github_actions": (".github/workflows/aos-guardrails.yml", "GitHub Actions CI Guardrail"),
-    }
+    tool_map = {hid: (path, name) for hid, name, path, *_ in HARNESS_SPECS}
     matched = tool_map.get(tool_id)
     if not matched:
         for k, (p, name) in tool_map.items():
@@ -2819,8 +2818,8 @@ def _get_harness_view(root: Path, tool_id: str) -> tuple[int, dict[str, Any]]:
         else:
             engine = RuleEngine(root_dir=root)
             active_rules = engine.get_rules(status="active")
-            rendered = format_rules_for_prompt(active_rules)
-            content = f"# Unsynced Preview ({rel_path})\n# Click 'Sync Harnesses' to write to disk:\n\n{rendered}"
+            rendered = format_rules_for_prompt(active_rules, root_dir=root, target=tool_id)
+            content = f"# Unsynced Preview ({rel_path})\n# Click 'Sync Target' to write to disk:\n\n{rendered}"
 
     return 200, {
         "id": tool_id,
@@ -3109,7 +3108,15 @@ class DashboardRequestHandler(BaseHTTPRequestHandler):
                 "message": f"Successfully ingested and activated {len(report.synthesized_rules)} tailored rule(s).",
             })
         elif path in ("/api/harnesses/sync", "/api/sync"):
-            resp = _sync_all_harnesses(self.root_dir)
+            target = payload.get("harness")
+            targets = payload.get("harnesses")
+            if target:
+                h_list = [str(target)]
+            elif targets and isinstance(targets, list):
+                h_list = [str(t) for t in targets]
+            else:
+                h_list = None
+            resp = _sync_all_harnesses(self.root_dir, harnesses=h_list)
             self._send_json(resp)
         elif path == "/api/harnesses/hook/install":
             try:

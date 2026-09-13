@@ -1,7 +1,8 @@
 <!-- AOS_INVARIANTS_START -->
+# GitHub Copilot Instructions
+
 ## Active Substrate Invariants (Machine-Enforced)
-The following invariants are actively enforced by the Agent Operating Substrate.
-You must strictly obey these constraints in every proposed patch:
+GitHub Copilot Chat instructions: you must strictly obey these machine-enforced repository invariants:
 
 ### [aos-deps-003] (Enforcement: reject_diff)
 * Statement: Build with minimal code. Avoid speculative abstractions. Favor local file primitives (JSON, YAML, SQLite) over complex external infrastructure. Do not introduce dependencies unless strictly necessary.
@@ -206,9 +207,9 @@ You must strictly obey these constraints in every proposed patch:
 ## Proactive Guardrail Memory: Recent Interceptions
 The following failure modes were recently intercepted by repository barriers.
 Ensure your implementation proactively avoids these exact patterns:
-* Intercepted [py-async-no-blocking-io-003]: Asynchronous functions (async def) must not invoke synchronous blocking I/O calls such as time.sleep, synchronous requests, or blocking filesystem operations.
-* Intercepted [py-no-bare-except-002]: Catching Exception or bare except blocks must not silently suppress errors with pass; catch specific exception classes and log or re-raise errors.
-* Intercepted [py-structured-logging-001]: Application, service, and core library code must use structured logging frameworks rather than standard print statements.
-* Intercepted [py-no-wildcard-import-002]: Wildcard imports ('from module import *') are prohibited; all imported symbols must be explicitly named or imported via the module namespace.
-* Intercepted [sec-safe-deserialization-001]: Untrusted dynamic input must not be processed with insecure deserialization primitives (pickle.loads, marshal, unsafe yaml.load) or arbitrary dynamic code evaluation (eval, exec).
+* Intercepted [team-agents-md-rule-3] in zensical.toml: Violation of 'team-agents-md-rule-3': Content exceeds maximum blast radius of 30 lines (85 lines detected).
+* Intercepted [team-agents-md-rule-1] in zensical.toml: Violation of 'team-agents-md-rule-1': Content exceeds maximum blast radius of 30 lines (85 lines detected).
+* Intercepted [sec-no-secrets-001] in zensical.toml: Violation of 'sec-no-secrets-001': Content exceeds maximum blast radius of 30 lines (85 lines detected).
+* Intercepted [gh-no-artifacts-credentials-002] in zensical.toml: Violation of 'gh-no-artifacts-credentials-002': Content exceeds maximum blast radius of 30 lines (85 lines detected).
+* Intercepted [gh-blast-radius-limit-003] in zensical.toml: Violation of 'gh-blast-radius-limit-003': Content exceeds maximum blast radius of 30 lines (85 lines detected).
 <!-- AOS_INVARIANTS_END -->
