@@ -1,0 +1,25 @@
+id: react-hooks-deps-001
+version: 1
+status: active
+scope:
+  paths:
+  - src/**/*.jsx
+  - src/**/*.tsx
+  languages:
+  - javascript
+  - typescript
+invariant:
+  statement: React hooks must declare exhaustive dependencies and avoid mutations
+    of component state during rendering.
+  rationale: Missing dependencies cause stale closure bugs and unpredictable re-rendering
+    loops.
+  enforcement: reject_diff
+  max_blast_radius_lines: 30
+provenance:
+  incident_id: pack-react-modern
+  git_commit: HEAD
+  inscribing_agent: pack-installer
+  created_at: '2026-09-13T06:58:06Z'
+  last_verified_at: '2026-09-13T06:58:06Z'
+  trigger_count: 1
+  peer_consensus_agent: pack-curator
