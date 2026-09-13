@@ -12,7 +12,7 @@ from aos.ci import run_ci_check
 from aos.curator import curate_substrate
 from aos.daemon import SubstrateDaemon
 from aos.engine import RuleEngine
-from aos.enforcer import enforce_all
+from aos.enforcer import auto_fix_file, enforce_all
 from aos.executor import execute_and_autopsy
 from aos.fleet import (
     export_fleet_bundle,
@@ -115,6 +115,18 @@ def cmd_rules_check(args: argparse.Namespace) -> int:
                 print(f"    Rationale:   {rule.invariant.rationale}")
         print()
 
+    if getattr(args, "fix", False):
+        total_fixed = 0
+        for f in args.files:
+            fixes = auto_fix_file(f, root_dir=args.root)
+            if fixes:
+                total_fixed += len(fixes)
+                print(f"Auto-fixed {f}:")
+                for fix in fixes:
+                    print(f"  - {fix}")
+        if total_fixed > 0:
+            print(f"Successfully applied {total_fixed} automated fix(es).")
+
     if args.enforce:
         violations = enforce_all(args.files, root_dir=args.root)
         if violations:
@@ -129,6 +141,18 @@ def cmd_rules_check(args: argparse.Namespace) -> int:
 
 def cmd_enforce(args: argparse.Namespace) -> int:
     """Deterministically validate files against all active rules."""
+    if getattr(args, "fix", False):
+        total_fixed = 0
+        for f in args.files:
+            fixes = auto_fix_file(f, root_dir=args.root)
+            if fixes:
+                total_fixed += len(fixes)
+                print(f"Auto-fixed {f}:")
+                for fix in fixes:
+                    print(f"  - {fix}")
+        if total_fixed > 0:
+            print(f"Successfully applied {total_fixed} automated fix(es).")
+
     violations = enforce_all(args.files, root_dir=args.root)
     if not violations:
         print("All files passed invariant verification.")
@@ -441,11 +465,21 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Return non-zero exit code if any active rule matches.",
     )
+    p_rules_check.add_argument(
+        "--fix",
+        action="store_true",
+        help="Automatically remediate safe invariant violations.",
+    )
     p_rules_check.set_defaults(func=cmd_rules_check)
 
     # aos enforce
     p_enforce = subparsers.add_parser("enforce", help="Enforce active invariant rules deterministically.")
     p_enforce.add_argument("files", nargs="+", help="Files to inspect.")
+    p_enforce.add_argument(
+        "--fix",
+        action="store_true",
+        help="Automatically remediate safe invariant violations.",
+    )
     p_enforce.set_defaults(func=cmd_enforce)
 
     # aos sync
