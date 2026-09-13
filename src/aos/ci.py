@@ -6,7 +6,10 @@ import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
+import json
+import urllib.error
+import urllib.request
 
 from aos.enforcer import Violation, enforce_all
 from aos.harness import sync_harnesses
@@ -36,6 +39,9 @@ class CIReport:
                 lines.append(f"* **[{v.rule_id}]** `{v.file_path}{loc}`: {v.message} (`{v.enforcement}`)")
         lines.append("")
         return "\n".join(lines)
+
+    def to_gatekeeper_markdown(self, root_dir: Path | str = ".") -> str:
+        return generate_gatekeeper_markdown(self, root_dir=root_dir)
 
 
 def get_git_changed_files(base_ref: str = "origin/main", root_dir: Path | str = ".") -> list[str]:
@@ -147,6 +153,209 @@ def review_pr_diff(diff_content: str, root_dir: Path | str = ".") -> dict[str, A
     }
 
 
+AOS_GATEKEEPER_MARKER = "<!-- AOS_GATEKEEPER_COMMENT -->"
+
+
+def get_violation_guidance(v: Violation, root_dir: Path | str = ".") -> str:
+    """Determine prescriptive guidance for an invariant violation."""
+    try:
+        from aos.engine import RuleEngine
+        from aos.harness import get_rule_guidance
+        engine = RuleEngine(root_dir=root_dir)
+        rule = next((r for r in engine.discover_rules() if r.id == v.rule_id), None)
+        if rule:
+            compliant, _ = get_rule_guidance(rule)
+            if compliant:
+                return compliant
+    except Exception:
+        pass
+
+    rid = v.rule_id.lower()
+    msg = v.message.lower()
+    stmt = (v.statement or "").lower()
+    comb = f"{rid} {msg} {stmt}"
+    if "wildcard" in comb:
+        return "import specific_module or from module import specific_symbol"
+    if "secret" in comb or "api key" in comb or "token" in comb or "password" in comb:
+        return "os.environ.get('API_KEY') or pass via secure configuration"
+    if "print" in comb or "logging" in comb:
+        return "logger = logging.getLogger(__name__); logger.info(...)"
+    if "bare-except" in comb or "bare except" in comb:
+        return "except SpecificException as exc: logger.warning('...', exc_info=exc)"
+    if "async" in comb and ("blocking" in comb or "sleep" in comb):
+        return "await asyncio.sleep(...) or run blocking calls in worker threads"
+    if "any" in comb or "explicit 'any'" in comb:
+        return "use unknown, generics, or an explicit interface/type"
+    if "floating-promise" in comb:
+        return "await asyncCall(), void asyncCall(), or asyncCall().catch(...)"
+    if "unsafe" in comb:
+        return "add preceding '// SAFETY: explanation of memory invariants' comment"
+    if "error-wrap" in comb or "%w" in comb:
+        return 'fmt.Errorf("context message: %w", err)'
+    if "punct" in comb or "em dash" in comb or "em-dash" in comb:
+        return "use colons, commas, semicolons, parentheses, or separate sentences"
+    if "blast-radius" in comb or "blast radius" in comb or "surgical" in comb:
+        return "keep diffs surgical and focused strictly on the assigned task"
+    if v.statement:
+        return v.statement
+    return f"Run `aos enforce --fix {v.file_path}`"
+
+
+def generate_gatekeeper_markdown(report: CIReport, root_dir: Path | str = ".") -> str:
+    """Generate sticky PR comment markdown for CI gatekeeper evaluation."""
+    lines: list[str] = [AOS_GATEKEEPER_MARKER]
+    if report.status == "passed" and not report.violations:
+        lines.extend([
+            "## 🛡️ AOS Guardrails Gatekeeper: Passed",
+            "",
+            "![AOS Gatekeeper](https://img.shields.io/badge/AOS_Gatekeeper-Passed-brightgreen)",
+            "",
+            "All modified files strictly comply with machine-enforced invariants.",
+            "",
+            "| Metric | Result |",
+            "| :--- | :--- |",
+            "| **Status** | Passed |",
+            f"| **Files Evaluated** | {len(report.checked_files)} |",
+            "| **Violations Detected** | 0 |",
+            "",
+        ])
+    else:
+        lines.extend([
+            "## 🛡️ AOS Guardrails Gatekeeper: Invariant Violations Detected",
+            "",
+            "![AOS Gatekeeper](https://img.shields.io/badge/AOS_Gatekeeper-Failed-red)",
+            "",
+            f"The Gatekeeper detected {len(report.violations)} invariant violation(s) across {len(report.checked_files)} evaluated file(s).",
+            "",
+            "| Severity | Rule ID | File | Line | Message | Remediation Guidance |",
+            "| :--- | :--- | :--- | :--- | :--- | :--- |",
+        ])
+        for v in report.violations:
+            loc = str(v.line_number) if v.line_number else "-"
+            guidance = get_violation_guidance(v, root_dir=root_dir)
+            msg = v.message.replace("|", "\\|").strip()
+            guidance_clean = guidance.replace("|", "\\|").strip()
+            lines.append(f"| `{v.enforcement}` | `{v.rule_id}` | `{v.file_path}` | {loc} | {msg} | {guidance_clean} |")
+
+        lines.extend([
+            "",
+            "> **Remediation Tip**: Run `aos enforce --fix <file>` locally to automatically remediate safe invariant violations.",
+            "",
+        ])
+
+    return "\n".join(lines)
+
+
+format_gatekeeper_comment = generate_gatekeeper_markdown
+
+
+def post_pr_comment(
+    report: CIReport,
+    pr_number: Optional[int] = None,
+    token: Optional[str] = None,
+    repo: Optional[str] = None,
+    api_url: Optional[str] = None,
+    root_dir: Path | str = ".",
+) -> bool:
+    """Post or update sticky PR comment with gatekeeper verification results."""
+    token = token or os.environ.get("GITHUB_TOKEN")
+    if not token:
+        return False
+
+    repo = repo or os.environ.get("GITHUB_REPOSITORY")
+    if not repo:
+        return False
+
+    if pr_number is None:
+        event_path = os.environ.get("GITHUB_EVENT_PATH")
+        if event_path and Path(event_path).is_file():
+            try:
+                with open(event_path, "r", encoding="utf-8") as f:
+                    event_data = json.load(f)
+                if isinstance(event_data, dict):
+                    pr_obj = event_data.get("pull_request")
+                    if isinstance(pr_obj, dict) and "number" in pr_obj:
+                        pr_number = pr_obj["number"]
+                    elif "issue" in event_data and isinstance(event_data["issue"], dict) and "number" in event_data["issue"]:
+                        pr_number = event_data["issue"]["number"]
+                    elif "number" in event_data:
+                        pr_number = event_data["number"]
+            except Exception:
+                pass
+
+    if pr_number is None:
+        return False
+
+    api_base = (api_url or os.environ.get("GITHUB_API_URL", "https://api.github.com")).rstrip("/")
+    comment_body = generate_gatekeeper_markdown(report, root_dir=root_dir)
+
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "Authorization": f"Bearer {token}",
+        "User-Agent": "AOS-Gatekeeper",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+
+    try:
+        comments_url = f"{api_base}/repos/{repo}/issues/{pr_number}/comments"
+        req_list = urllib.request.Request(comments_url, headers=headers, method="GET")
+        with urllib.request.urlopen(req_list) as resp:
+            comments_data = json.loads(resp.read().decode("utf-8"))
+
+        existing_id: Optional[int] = None
+        if isinstance(comments_data, list):
+            for c in comments_data:
+                if isinstance(c, dict) and AOS_GATEKEEPER_MARKER in c.get("body", ""):
+                    existing_id = c.get("id")
+                    break
+
+        post_headers = dict(headers)
+        post_headers["Content-Type"] = "application/json"
+        payload = json.dumps({"body": comment_body}).encode("utf-8")
+
+        if existing_id is not None:
+            patch_url = f"{api_base}/repos/{repo}/issues/comments/{existing_id}"
+            req_patch = urllib.request.Request(patch_url, data=payload, headers=post_headers, method="PATCH")
+            with urllib.request.urlopen(req_patch) as resp:
+                return resp.status in (200, 201)
+        else:
+            req_post = urllib.request.Request(comments_url, data=payload, headers=post_headers, method="POST")
+            with urllib.request.urlopen(req_post) as resp:
+                return resp.status in (200, 201)
+    except Exception:
+        return False
+
+
+def run_gatekeeper(
+    base_ref: str = "origin/main",
+    post_comment: bool = True,
+    fail_on_violation: bool = True,
+    root_dir: Path | str = ".",
+    pr_number: Optional[int] = None,
+    token: Optional[str] = None,
+    repo: Optional[str] = None,
+    api_url: Optional[str] = None,
+) -> int:
+    """Execute CI check, post sticky comment, and return gatekeeper exit code."""
+    root = Path(root_dir)
+    report = run_ci_check(base_ref=base_ref, root_dir=root)
+
+    if post_comment:
+        post_pr_comment(
+            report=report,
+            pr_number=pr_number,
+            token=token,
+            repo=repo,
+            api_url=api_url,
+            root_dir=root,
+        )
+
+    has_violations = report.status != "passed" or bool(report.violations)
+    if has_violations and fail_on_violation:
+        return 1
+    return 0
+
+
 DEFAULT_GITHUB_WORKFLOW = """name: AOS Guardrails
 
 on:
@@ -154,6 +363,10 @@ on:
     branches: [ master, main ]
   push:
     branches: [ master, main ]
+
+permissions:
+  pull-requests: write
+  contents: read
 
 jobs:
   verify-invariants:
@@ -176,8 +389,10 @@ jobs:
           pip install -e .
 
       - name: Verify Invariants
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          python -m aos ci run --auto-sync
+          python -m aos ci run --auto-sync --comment
 """
 
 
