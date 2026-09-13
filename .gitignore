@@ -22,3 +22,4 @@ Thumbs.db
 *.db
 *.egg-info/
 .agents/blackboard/events.jsonl
+.agents/vault/

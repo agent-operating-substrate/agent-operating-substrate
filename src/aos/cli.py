@@ -484,6 +484,57 @@ def cmd_ingest(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_identity_list(args: argparse.Namespace) -> int:
+    """List autonomous agent identities and supervisory mailboxes."""
+    from aos.identity import list_identities
+    identities = list_identities(root_dir=args.root)
+    if not identities:
+        print("No autonomous agent identities in vault. Run 'aos identity create' to initialize.")
+        return 0
+    print(f"Found {len(identities)} autonomous agent identity/identities in vault:")
+    for ident in identities:
+        print(f"- Persona:  {ident.get('persona')}")
+        print(f"  Address:  {ident.get('address')}")
+        print(f"  Webmail:  {ident.get('webmail_url')} (Supervision: Login with email & password)")
+        print()
+    return 0
+
+
+def cmd_identity_create(args: argparse.Namespace) -> int:
+    """Create a free programmatic mailbox for an autonomous agent persona."""
+    from aos.identity import create_agent_account
+    ident = create_agent_account(persona=args.persona, password=args.password, root_dir=args.root)
+    print("=" * 70)
+    print("AUTONOMOUS AGENT IDENTITY CREATED")
+    print("=" * 70)
+    print(f"Persona:       {ident['persona']}")
+    print(f"Email Address: {ident['address']}")
+    print(f"Password:      {ident['password']}")
+    print(f"Webmail Login: {ident['webmail_url']}")
+    print("Supervision:   Saved to .agents/vault/identities.json (gitignored).")
+    print("=" * 70)
+    return 0
+
+
+def cmd_identity_inbox(args: argparse.Namespace) -> int:
+    """Check incoming messages for an agent persona."""
+    from aos.identity import fetch_agent_messages
+    try:
+        messages = fetch_agent_messages(persona_or_address=args.persona, root_dir=args.root)
+    except Exception as exc:
+        print(f"Error reading inbox: {exc}")
+        return 1
+    if not messages:
+        print(f"Inbox for '{args.persona}' is empty.")
+        return 0
+    print(f"Found {len(messages)} message(s) for '{args.persona}':")
+    for m in messages:
+        sender = m.get("from", {}).get("address", "unknown")
+        print(f"- ID: {m.get('id')} | From: {sender} | Subject: {m.get('subject')}")
+        print(f"  Snippet: {m.get('intro')}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="aos",
@@ -691,6 +742,22 @@ def build_parser() -> argparse.ArgumentParser:
     p_ingest.add_argument("--install-packs", action="store_true", help="Automatically install stack-recommended rule packs.")
     p_ingest.add_argument("--dry-run", action="store_true", help="Scan and display proposed rules without saving.")
     p_ingest.set_defaults(func=cmd_ingest)
+
+    # aos identity
+    p_ident = subparsers.add_parser("identity", help="Manage autonomous agent identities and supervisory mailboxes.")
+    ident_sub = p_ident.add_subparsers(dest="identity_command", required=True)
+
+    p_ident_list = ident_sub.add_parser("list", help="List autonomous agent identities.")
+    p_ident_list.set_defaults(func=cmd_identity_list)
+
+    p_ident_create = ident_sub.add_parser("create", help="Create a free programmatic mailbox for an agent persona.")
+    p_ident_create.add_argument("--persona", default="maintainer", help="Persona name (maintainer, auditor, curator, sentry, ci).")
+    p_ident_create.add_argument("--password", default=None, help="Optional custom password.")
+    p_ident_create.set_defaults(func=cmd_identity_create)
+
+    p_ident_inbox = ident_sub.add_parser("inbox", help="View incoming messages for an agent persona.")
+    p_ident_inbox.add_argument("persona", help="Persona name or email address.")
+    p_ident_inbox.set_defaults(func=cmd_identity_inbox)
 
     return parser
 
