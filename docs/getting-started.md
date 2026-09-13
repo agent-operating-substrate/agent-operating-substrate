@@ -6,9 +6,9 @@
 
 ## What You Achieve in 5 Minutes
 
-The Agent Operating Substrate (AOS) is a local behavior firewall and memory layer for AI coding assistants. It stops AI tools like Cursor, Copilot, and Claude Code from repeating mistakes or making breaking changes to your codebase.
+The Agent Operating Substrate (AOS) is a vendor-agnostic behavior firewall and permanent memory layer for AI coding assistants. It stops AI tools across Gemini, Claude, Codex, Copilot, Cursor, Windsurf, Aider, and local models from repeating mistakes or making breaking changes to your codebase.
 
-Setting up AOS equips your codebase with an autonomous behavior firewall and permanent memory for Cursor, Copilot, Claude Code, and Windsurf in under five minutes.
+Setting up AOS equips your codebase with an autonomous behavior firewall, unified memory, and complete vendor abstraction in under five minutes.
 
 By completing this guide, you will have:
 1. **The Universal Git Pre-Commit Barrier:** Deterministically blocking broken agent commits and non-compliant code before it leaves your machine.
@@ -162,9 +162,9 @@ Substrate Rules (root: .):
 
 ## Step 4: Sync Agent Harness Configurations
 
-Different engineers on your team use different tools: Cursor, Windsurf, GitHub Copilot, Claude Code, or custom agent scripts. 
+Different engineers on your team use different models and tools: Google Gemini (Gemini Code Assist / Antigravity), Anthropic Claude (Claude Code), OpenAI Codex / ChatGPT, GitHub Copilot, Cursor, Windsurf, or Aider.
 
-Rather than maintaining separate prompt instructions in each tool, `aos sync` compiles all active rules from `.agents/substrate/active/` and injects them directly into your agent harness configuration files:
+Rather than maintaining separate prompt instructions in each tool or suffering prompt drift across different LLM providers, `aos sync` compiles all active rules from `.agents/substrate/active/` and injects them directly into your agent harness configuration files:
 
 ```bash
 aos sync
@@ -210,7 +210,7 @@ aos sync --harnesses cursor,claude
 
 ## Step 5: Enable the Model Context Protocol (MCP) Server
 
-AOS provides a first-class Model Context Protocol (MCP) server over standard input and output (stdio). Any MCP-capable client (Cursor, Claude Desktop, Antigravity, or custom agent runtimes) can query invariants and announce intents natively.
+AOS provides a first-class Model Context Protocol (MCP) server over standard input and output (stdio). Any MCP-capable client (Cursor, Claude Desktop, Antigravity, Gemini Code Assist, Cline, or custom agent runtimes) can query invariants and announce intents natively.
 
 Start the server:
 
@@ -346,6 +346,7 @@ Your coding agents now operate within strict, machine-enforced guardrails that i
 
 ## Next Steps
 
+* [AI Vendor Abstraction](vendor-abstraction.md): Deep dive on decoupling repository invariants and control planes from LLM providers.
 * [IDE & Tool Integration](ide-integration.md): Step-by-step setup for Cursor, Claude Code, Copilot, Windsurf, and Git pre-commit hooks.
 * [Control Plane Web Dashboard](control-plane-ui.md): Visual tour of real-time guardrail controls, diff testing, and incident autopsies.
 * [Curated Rule Packs](rule-packs.md): Catalog of security, clean architecture, and SIMD performance invariant packs.

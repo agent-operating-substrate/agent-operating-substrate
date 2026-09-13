@@ -1,6 +1,7 @@
 """Tests verifying harness projection and syncing."""
 
 from pathlib import Path
+import yaml
 from aos.harness import format_rules_for_prompt, inject_into_file, sync_harnesses
 from aos.models import InvariantRule, Scope, Invariant, Provenance
 
@@ -86,3 +87,56 @@ def test_format_rules_with_guidance_and_lessons(tmp_path: Path):
     assert "Strictly Forbidden" in rendered
     assert "Proactive Guardrail Memory: Recent Interceptions" in rendered
     assert "src/bad_file.py" in rendered
+
+
+def test_sync_harnesses_universal_targets(tmp_path: Path):
+    sub_dir = tmp_path / ".agents" / "substrate" / "active"
+    sub_dir.mkdir(parents=True, exist_ok=True)
+    rule_dict = {
+        "id": "sec-credentials-001",
+        "version": 1,
+        "status": "active",
+        "scope": {"paths": ["**/*"], "languages": ["python"]},
+        "invariant": {
+            "statement": "Never hardcode raw API tokens.",
+            "rationale": "Security hygiene.",
+            "enforcement": "reject_diff",
+        },
+        "provenance": {
+            "incident_id": "inc-01", "git_commit": "abc", "inscribing_agent": "tester",
+            "created_at": "2026-09-08T18:00:00Z", "last_verified_at": "2026-09-08T18:00:00Z",
+        },
+    }
+    with open(sub_dir / "sec-credentials-001.yaml", "w", encoding="utf-8") as f:
+        yaml.safe_dump(rule_dict, f)
+
+    targets = ["gemini", "gemini_root", "codex", "codex_root", "aider", "cline", "roo", "amazonq", "agents"]
+    synced = sync_harnesses(root_dir=tmp_path, harnesses=targets)
+
+    for t in targets:
+        assert t in synced
+        assert synced[t].is_file()
+        content = synced[t].read_text(encoding="utf-8")
+        assert "AOS_INVARIANTS_START" in content
+        assert "sec-credentials-001" in content
+        assert "Never hardcode raw API tokens." in content
+
+
+def test_format_rules_for_prompt_tool_specific_headers():
+    rule = InvariantRule(
+        id="test-rule-002", version=1, status="active",
+        scope=Scope(paths=["**/*"], languages=["python"]),
+        invariant=Invariant(statement="No eval calls.", rationale="Security.", enforcement="reject_diff"),
+        provenance=Provenance(
+            incident_id="inc-2", git_commit="cde", inscribing_agent="tester",
+            created_at="2026-09-08T18:00:00Z", last_verified_at="2026-09-08T18:00:00Z",
+        ),
+    )
+    assert "# Google Gemini & Antigravity Instructions" in format_rules_for_prompt([rule], target="gemini")
+    assert "# OpenAI Codex & ChatGPT Developer Instructions" in format_rules_for_prompt([rule], target="codex")
+    assert "# Aider Repository Invariants & Conventions" in format_rules_for_prompt([rule], target="aider")
+    assert "# Cline System Rules & Invariants" in format_rules_for_prompt([rule], target="cline")
+    assert "# Roo Code System Invariants" in format_rules_for_prompt([rule], target="roo")
+    assert "# Amazon Q Developer Rules" in format_rules_for_prompt([rule], target="amazonq")
+    assert "# Universal Agent Operating Guidelines" in format_rules_for_prompt([rule], target="agents")
+    assert "description: Machine-enforced" in format_rules_for_prompt([rule], target="cursor_mdc")

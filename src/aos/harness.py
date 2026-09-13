@@ -41,20 +41,48 @@ def get_rule_guidance(rule: InvariantRule) -> tuple[Optional[str], Optional[str]
     return (None, None)
 
 
+def get_target_prompts(target: Optional[str]) -> tuple[Optional[str], Optional[str]]:
+    """Return tool-specific header and introductory prompt for a target harness."""
+    prompts = {
+        "gemini": ("# Google Gemini & Antigravity Instructions", "You are Google Gemini / Antigravity coding assistant. You must strictly enforce the following machine-enforced repository invariants:"),
+        "gemini_root": ("# Google Gemini & Antigravity Instructions", "You are Google Gemini / Antigravity coding assistant. You must strictly enforce the following machine-enforced repository invariants:"),
+        "codex": ("# OpenAI Codex & ChatGPT Developer Instructions", "You are OpenAI Codex / ChatGPT developer assistant. You must strictly adhere to the following machine-enforced repository invariants:"),
+        "codex_root": ("# OpenAI Codex & ChatGPT Developer Instructions", "You are OpenAI Codex / ChatGPT developer assistant. You must strictly adhere to the following machine-enforced repository invariants:"),
+        "aider": ("# Aider Repository Invariants & Conventions", "Aider pairing assistant conventions: strictly adhere to the following machine-enforced repository invariants for all edits:"),
+        "cline": ("# Cline System Rules & Invariants", "Autonomous agent instructions for Cline: you must strictly comply with the following machine-enforced repository invariants:"),
+        "roo": ("# Roo Code System Invariants", "Autonomous agent instructions for Roo Code: follow these machine-enforced repository invariants across all operational modes:"),
+        "amazonq": ("# Amazon Q Developer Rules", "Amazon Q Developer instructions: strictly obey the following machine-enforced repository invariants for all code suggestions:"),
+        "agents": ("# Universal Agent Operating Guidelines (AOS Substrate)", "Universal agent instructions: these machine-enforced repository invariants apply to any autonomous agent operating here:"),
+        "cursor": ("# Cursor AI Invariant Instructions", "Cursor Composer and Chat instructions: you must strictly obey these machine-enforced repository invariants:"),
+        "cursor_mdc": ("---\ndescription: Machine-enforced substrate invariants and coding guardrails\nglobs: *\nalwaysApply: true\n---\n\n# Cursor Invariant Rules (MDC)", "Cursor Composer rules: you must strictly obey these machine-enforced repository invariants:"),
+        "windsurf": ("# Windsurf Cascade Invariant Instructions", "Windsurf Cascade agent instructions: you must strictly obey these machine-enforced repository invariants:"),
+        "copilot": ("# GitHub Copilot Instructions", "GitHub Copilot Chat instructions: you must strictly obey these machine-enforced repository invariants:"),
+        "claude": ("# Claude Code Instructions", "Claude Code CLI instructions: you must strictly obey these machine-enforced repository invariants:"),
+    }
+    return prompts.get(target or "", (None, None))
+
+
 def format_rules_for_prompt(
     rules: list[InvariantRule],
     root_dir: Optional[Path | str] = None,
+    target: Optional[str] = None,
 ) -> str:
     """Format active invariant rules as prompt instructions for any LLM."""
     if not rules:
         return "No active invariant rules in substrate."
 
-    lines = [
-        "## Active Substrate Invariants (Machine-Enforced)",
-        "The following invariants are actively enforced by the Agent Operating Substrate.",
-        "You must strictly obey these constraints in every proposed patch:",
-        "",
-    ]
+    header, intro = get_target_prompts(target)
+    lines: list[str] = []
+    if header:
+        lines.append(header)
+        lines.append("")
+    lines.append("## Active Substrate Invariants (Machine-Enforced)")
+    if intro:
+        lines.append(intro)
+    else:
+        lines.append("The following invariants are actively enforced by the Agent Operating Substrate.")
+        lines.append("You must strictly obey these constraints in every proposed patch:")
+    lines.append("")
     for r in sorted(rules, key=lambda x: x.id):
         lines.append(f"### [{r.id}] (Enforcement: {r.invariant.enforcement})")
         lines.append(f"* Statement: {r.invariant.statement}")
@@ -129,14 +157,21 @@ def sync_harnesses(
     root = Path(root_dir)
     engine = RuleEngine(root_dir=root)
     active_rules = engine.get_rules(status="active")
-    rendered = format_rules_for_prompt(active_rules, root_dir=root)
-
     available_targets: dict[str, Path] = {
         "cursor": root / ".cursorrules",
         "cursor_mdc": root / ".cursor" / "rules" / "aos-invariants.mdc",
         "windsurf": root / ".windsurfrules",
         "copilot": root / ".github" / "copilot-instructions.md",
         "claude": root / "CLAUDE.md",
+        "gemini": root / ".gemini" / "instructions.md",
+        "gemini_root": root / "GEMINI.md",
+        "codex": root / ".openai" / "instructions.md",
+        "codex_root": root / "CODEX.md",
+        "aider": root / "CONVENTIONS.md",
+        "cline": root / ".clinerules",
+        "roo": root / ".roomodes",
+        "amazonq": root / ".amazonq" / "rules.md",
+        "agents": root / "AGENTS.md",
     }
 
     selected = harnesses if harnesses else list(available_targets.keys())
@@ -145,6 +180,7 @@ def sync_harnesses(
     for name in selected:
         if name in available_targets:
             target_path = available_targets[name]
+            rendered = format_rules_for_prompt(active_rules, root_dir=root, target=name)
             inject_into_file(target_path, rendered)
             updated[name] = target_path
 

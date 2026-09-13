@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "agent-operating-substrate"
 version = "0.1.0"
-description = "Autonomous behavior firewall, stigmergic runtime, and permanent memory for Cursor, Copilot, and Claude Code"
+description = "Autonomous behavior firewall, vendor-agnostic control plane, and permanent memory across Gemini, Claude, Codex, Copilot, Cursor, and Windsurf"
 readme = "README.md"
 license = "MIT"
 authors = [
@@ -15,9 +15,20 @@ keywords = [
     "agents",
     "guardrails",
     "invariants",
-    "cursor",
-    "copilot",
+    "gemini",
     "claude-code",
+    "codex",
+    "chatgpt",
+    "copilot",
+    "cursor",
+    "windsurf",
+    "amazon-q",
+    "aider",
+    "cline",
+    "roo-code",
+    "ai-governance",
+    "llm-firewall",
+    "vendor-abstraction",
     "pre-commit",
     "stigmergy",
     "mcp",

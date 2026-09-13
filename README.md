@@ -1,10 +1,11 @@
 # Agent Operating Substrate (AOS)
 
-### The Autonomous Behavior Firewall & Permanent Memory for Cursor, Copilot, and Claude Code.
+### The Universal AI Behavior Firewall & Vendor-Agnostic Control Plane across Gemini, Claude, Codex, Copilot, Cursor, and Windsurf.
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](#license)
 [![Zero External Dependencies](https://img.shields.io/badge/dependencies-zero%20external-orange.svg)](#architecture)
+[![Vendor Agnostic](https://img.shields.io/badge/AI%20models-vendor--agnostic-blueviolet.svg)](#supported-ai-ecosystems--models)
 [![MCP Protocol Ready](https://img.shields.io/badge/MCP-compatible-purple.svg)](docs/getting-started.md#step-5-enable-the-model-context-protocol-mcp-server)
 [![Pre-Commit Enforced](https://img.shields.io/badge/git-pre--commit%20firewall-red.svg)](docs/getting-started.md#step-6-install-the-universal-git-pre-commit-hook)
 
@@ -13,19 +14,21 @@
 
 ***
 
-## Why AOS?
+## The Universal AI Behavior Firewall & Memory Layer
 
-The Agent Operating Substrate (AOS) is a local behavior firewall and permanent memory system for AI coding assistants. It prevents tools like Cursor, GitHub Copilot, Claude Code, and Windsurf from repeating known mistakes, violating architectural boundaries, or introducing breaking diffs into your codebase.
+Enterprises and developers cannot afford AI vendor lock-in or model-specific behavioral drift. Whether your engineers prompt Google Gemini 1.5 Pro, Anthropic Claude 3.5 Sonnet, OpenAI GPT-4o / Codex, Amazon Q Developer, or run local DeepSeek and Llama models, each model interprets prompts differently, hallucinates distinct anti-patterns, and loses context once the session ends.
 
-Autonomous coding agents are transforming engineering velocity. However, as teams scale AI-assisted development into production, they run directly into three structural roadblocks:
+**AOS eliminates vendor lock-in by decoupling repository guardrails from the model provider.**
 
-1. **Day-One Amnesia:** Every agent session starts from a blank slate. When an agent violates an architectural invariant, introduces memory bugs, or breaks an unspoken convention, an engineer must manually intervene. Once that context window closes, the lesson evaporates. The next agent invocation repeats the identical mistake.
+No matter which AI assistant your team selects today or migrates to tomorrow, AOS guarantees the exact same repository invariants, institutional memory, and deterministic pre-commit enforcement.
+
+### Three Structural Roadblocks AOS Solves
+
+1. **Day-One Amnesia:** Every agent session starts from a blank slate. When an agent violates an architectural invariant, introduces memory bugs, or breaks an unspoken convention, an engineer manually intervenes. Once that context window closes, the lesson evaporates. The next agent invocation repeats the identical mistake.
 2. **The Human Air-Traffic Controller Bottleneck:** Multi-agent development remains strictly hub-and-spoke. Engineers spend hours manually shuttling diffs, error traces, and prompts between worker, critique, and test agents.
 3. **Broken Commits and Silent Regressions:** AI agents hallucinate deprecated APIs, alter adjacent imports, and introduce diff bloat that slips past human reviewers and pollutes Git history.
 
-**AOS turns your repository into a self-defending, self-improving substrate.** 
-
-It provides an **Autonomous Behavior Firewall** that deterministically blocks invalid agent commits, and **Permanent Memory** that records failures as machine-enforced invariants compiled directly into every agent harness.
+**AOS turns your repository into a self-defending, self-improving substrate.** It provides an **Autonomous Behavior Firewall** that deterministically blocks invalid agent commits, and **Permanent Memory** that records failures as machine-enforced invariants compiled directly into every agent harness.
 
 ***
 
@@ -44,6 +47,24 @@ It provides an **Autonomous Behavior Firewall** that deterministically blocks in
 
 ***
 
+## Supported AI Ecosystems & Models
+
+AOS is engineered for complete AI vendor neutrality. By decoupling repository invariants and verification from any specific model provider, AOS guarantees consistent guardrails across every tool in your stack:
+
+| AI Ecosystem / Model | Supported Tooling & Interfaces | Integration Mode | Enforcement Mechanism |
+| :--- | :--- | :--- | :--- |
+| **Google Gemini** | Gemini Code Assist, Gemini CLI, Antigravity | Live MCP Server (`aos mcp`), CLI execution autopsy (`aos exec`), Stigmergic Blackboard | Pre-commit hook & live MCP tools |
+| **Anthropic Claude** | Claude Code, Claude Desktop, Claude Projects | Single-source `CLAUDE.md` sync (`aos sync`), native MCP stdio server | Deterministic pre-commit firewall (`aos hook run`) |
+| **OpenAI Codex & ChatGPT** | OpenAI Codex, ChatGPT Developer Mode, GPT-4o | Prompt projection, MCP protocol, Git pre-commit barrier | Substrate invariant evaluation & diff bouncer |
+| **GitHub Copilot** | VS Code, JetBrains, Visual Studio, Copilot Chat | Automatic `.github/copilot-instructions.md` compilation | Pre-commit hook & CI pipeline gatekeeper |
+| **Cursor IDE** | Cursor Composer, Cursor Agent Mode | `.cursorrules` and `.cursor/rules/*.mdc` synchronization, MCP server | Instant rule prompt injection & pre-commit hook |
+| **Windsurf / Codeium** | Windsurf IDE, Codeium Cascade | `.windsurfrules` automatic synchronization | Staged diff bouncer & rule validation |
+| **Aider, Roo Code & Cline** | Aider CLI, Roo Code, Cline (VS Code) | Context injection (`.agents/substrate/active`), stdio MCP | Autonomous pre-commit barrier & execution autopsy |
+| **Amazon Q Developer** | Amazon Q (AWS Toolkit, VS Code, JetBrains) | Substrate prompt compilation & Git pre-commit barrier | Deterministic pre-commit enforcement & CI check |
+| **Local & Open Weights** | DeepSeek-R1 / V3, Llama 3, Mistral, Qwen (via Ollama, vLLM) | File-based substrate, local SQLite, stdio MCP | 100% offline, local-first behavior firewall |
+
+***
+
 ## Architecture
 
 AOS operates across three integrated planes: prompt projection, live agent context tools, and deterministic git enforcement.
@@ -52,8 +73,8 @@ AOS operates across three integrated planes: prompt projection, live agent conte
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                          AGENT HARNESS INTERACTION                          │
 │                                                                             │
-│   Cursor IDE          Windsurf IDE       GitHub Copilot      Claude Code    │
-│  (.cursorrules)     (.windsurfrules)    (copilot-instr.)     (CLAUDE.md)    │
+│  Gemini / Antigravity     Claude Code     Codex / ChatGPT    GitHub Copilot │
+│  Cursor (.cursorrules)    Windsurf IDE    Aider / Cline      Amazon Q       │
 └───────────────────────────────────────▲─────────────────────────────────────┘
                                         │ (aos sync: prompt projection)
 ┌───────────────────────────────────────┴─────────────────────────────────────┐
@@ -85,7 +106,7 @@ AOS operates across three integrated planes: prompt projection, live agent conte
 ### Core Architecture Components
 
 1. **Prompt Sync:** `aos sync` compiles all active machine-readable invariants from `.agents/substrate/active/` into your team's existing agent configuration files (`.cursorrules`, `.cursor/rules/aos-invariants.mdc`, `.windsurfrules`, `.github/copilot-instructions.md`, and `CLAUDE.md`). Rules stay bounded within deterministic HTML comment tags without overwriting custom prompt instructions.
-2. **Model Context Protocol (MCP) Server:** `aos mcp` provides a native stdio protocol server. Any MCP-compatible tool (Cursor, Claude Desktop, Antigravity) can dynamically query active rules, inspect file blast radius, post intents, and record failure autopsies.
+2. **Model Context Protocol (MCP) Server:** `aos mcp` provides a native stdio protocol server. Any MCP-compatible tool (Cursor, Claude Desktop, Antigravity, Gemini Code Assist, Cline) can dynamically query active rules, inspect file blast radius, post intents, and record failure autopsies.
 3. **Git Pre-Commit Barrier:** `aos hook run` acts as the repo bouncer. Every staged diff is evaluated against active invariants before a commit is created. Violations halt execution immediately with exact file and line references.
 4. **Stigmergic Blackboard:** Agents communicate asynchronously by reading and appending events in `.agents/blackboard/events.jsonl`. When a worker announces an intent, an auditor injects invariants, and an adversarial critic generates edge-case tests, entirely without human intervention.
 5. **Execution Autopsy Engine:** `aos exec -- <command>` intercepts build or test failures, diagnoses root causes, and inscribes candidate rules under `.agents/substrate/candidate/` for peer review.
@@ -238,9 +259,27 @@ AOS is running right now in production repositories. Here are three machine-enfo
 
 ***
 
-## Enterprise Compliance & Fleet Governance
+## Enterprise & Commercial Readiness
 
-As enterprises deploy hundreds of AI coding agents across dozens of engineering teams, they face **Distributed Agent Amnesia**: team A discovers and patches a critical security flaw, but team B and team C repeat the exact same vulnerability next week.
+As enterprises deploy hundreds of AI coding agents across engineering teams, they face **Distributed Agent Amnesia**: team A discovers and patches a critical security flaw, but team B and team C repeat the exact same vulnerability next week. AOS provides an enterprise-grade control plane designed for commercial reliability and governance.
+
+### 1. SOC2 & AI Audit Compliance
+Every autonomous agent modification, intent declaration, invariant check, and consensus decision is permanently recorded in a tamper-proof, append-only event stream (`.agents/blackboard/events.jsonl`).
+* **Immutable Audit Trail:** Track which model proposed a diff, which invariant validated or rejected it, and which human or peer agent approved the change.
+* **Cryptographic & Git Provenance:** Invariants record originating incident IDs, git commit hashes, author agent signatures, and verification timestamps.
+* **Compliance Ready:** Satisfies SOC2 Type II, ISO 27001, and enterprise AI safety audits without transmitting proprietary code to third-party clouds.
+
+### 2. Eliminating AI Regression Costs
+AI code generation velocity is meaningless if senior engineers spend hours diagnosing hallucinations and fixing broken builds.
+* **Halting Hallucinations at the Source:** Intercepts hallucinated third-party dependencies, invalid imports, and deprecated API calls before code reaches pull request review.
+* **Preventing Secret Leaks:** Built-in OWASP rules (`sec-secret-leak-002`) deterministically block API tokens, credentials, and private keys before they enter git history.
+* **Pre-Commit Enforcement:** The universal git pre-commit hook runs in milliseconds locally, cutting CI re-run costs and preventing broken commits from reaching master branches.
+
+### 3. Centralized Fleet Governance Across 100+ Repositories (`aos fleet`)
+Connect isolated repositories into an institutional knowledge network:
+* **Global Policy Propagation:** Platform teams broadcast promoted invariants into a shared fleet mesh (`.agents/fleet.db`) with `aos fleet publish`.
+* **Zero Policy Drift:** Microservices and product repositories ingest organizational security and architectural rules with `aos fleet sync`.
+* **Sovereign & Local-First:** 100% offline-capable, backed by local SQLite and Git. Zero source code or proprietary schemas are transmitted to external SaaS platforms.
 
 ```
 Without Fleet Synchronization (Isolated & Vulnerable):
@@ -300,6 +339,7 @@ Team A (Origin) ──> Inscribes Rule ──> aos fleet publish
 
 * [Overview & Core Thesis](docs/index.md): Motivation, failure modes, and stigmergic solution.
 * [Getting Started Guide](docs/getting-started.md): Step-by-step setup, harness sync, and MCP configuration.
+* [AI Vendor Abstraction](docs/vendor-abstraction.md): Decoupling repository invariants and control planes from LLM model providers.
 * [IDE & Tool Integration](docs/ide-integration.md): Setup Cursor, Claude Code, Copilot, Windsurf, and Git pre-commit hooks.
 * [Control Plane Web Dashboard](docs/control-plane-ui.md): Visual tour of real-time guardrail controls, diff testing, and incident autopsies.
 * [Curated Rule Packs](docs/rule-packs.md): Catalog of security, clean architecture, and SIMD performance invariant packs.
