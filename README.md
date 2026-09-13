@@ -12,6 +12,9 @@
 [![Vendor Agnostic](https://img.shields.io/badge/AI%20models-vendor--agnostic-blueviolet.svg)](#supported-ai-ecosystems--models)
 [![MCP Protocol Ready](https://img.shields.io/badge/MCP-compatible-purple.svg)](docs/getting-started.md#step-5-enable-the-model-context-protocol-mcp-server)
 [![Pre-Commit Enforced](https://img.shields.io/badge/git-pre--commit%20firewall-red.svg)](docs/getting-started.md#step-6-install-the-universal-git-pre-commit-hook)
+[![GitHub Sponsors](https://img.shields.io/badge/sponsor-GitHub%20Sponsors-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/agent-operating-substrate)
+[![Open Collective](https://img.shields.io/badge/donate-Open%20Collective-4b72fa?logo=opencollective&logoColor=white)](https://opencollective.com/agent-operating-substrate)
+[![Buy Me A Coffee](https://img.shields.io/badge/support-Buy%20Me%20A%20Coffee-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/aos_agent)
 
 > [!NOTE]
 > **Autonomous Agent Project Notice**: The Agent Operating Substrate is designed, implemented, and maintained autonomously by AI agents (`AOS Agent`). The agents identify codebase improvements, conduct failure autopsies, synthesize invariant rules, and maintain repository health under human supervisory oversight. All post-initial release contributions follow a strict Pull Request / Merge Request model to support parallel multi-agent and human collaboration.
@@ -354,6 +357,28 @@ Team A (Origin) ──> Inscribes Rule ──> aos fleet publish
 * [Enterprise Fleet Synchronization](docs/enterprise-fleet.md): Cross-repository governance and fleet mesh management.
 * [System Specification](SPEC.md): Formal YAML schemas and protocol specifications.
 * [Agent Guidelines](AGENTS.md): Strict operating rules for autonomous agents working in this repository.
+
+***
+
+## Sustaining Autonomous Agent Development
+
+The Agent Operating Substrate is designed, implemented, and maintained autonomously by AI agents (`AOS Agent`) under human supervisory oversight. All pull requests, code reviews, forensic autopsies, and invariant synchronizations are executed continuously by autonomous agent workers.
+
+Sustaining continuous autonomous maintenance incurs real infrastructure costs:
+* **API & Model Inference:** LLM token costs for code synthesis, semantic analysis, and automated autopsies across Gemini, Claude, and Codex.
+* **Continuous Integration:** CI compute minutes verifying invariant boundaries, execution sandboxes, and cross-platform matrix test suites.
+* **Fleet Verification:** Automated evaluation runs validating rule packs across diverse ecosystem repositories.
+
+Open-source donations directly fund the API tokens, CI compute minutes, and LLM inference costs required for continuous guardrail verification, forensic autopsies, and autonomous maintenance.
+
+### Support Agent Compute
+
+* **GitHub Sponsors:** [Sponsor @agent-operating-substrate](https://github.com/sponsors/agent-operating-substrate)
+* **Open Collective:** [Support agent-operating-substrate on Open Collective](https://opencollective.com/agent-operating-substrate)
+* **Buy Me A Coffee:** [Support AOS Agent on Buy Me A Coffee](https://buymeacoffee.com/aos_agent)
+* **Ko-fi:** [Support AOS Agent on Ko-fi](https://ko-fi.com/aos_agent)
+
+Every contribution keeps the autonomous agent fleet running, verified, and defending repositories against regressions.
 
 ***
 

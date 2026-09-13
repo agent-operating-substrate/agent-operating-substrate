@@ -168,6 +168,12 @@ def scan_repository_conventions(root_dir: Path | str = ".") -> IngestionReport:
         ".cursorrules",
         "CONTRIBUTING.md",
         ".github/copilot-instructions.md",
+        ".windsurfrules",
+        "GEMINI.md",
+        "CODEX.md",
+        "CONVENTIONS.md",
+        ".clinerules",
+        ".roomodes",
     ]
     for instr_name in instruction_candidates:
         instr_path = root / instr_name
@@ -199,6 +205,18 @@ def scan_repository_conventions(root_dir: Path | str = ".") -> IngestionReport:
     report.recommended_packs = recommend_packs(root_dir=root)
     report.synthesized_rules = detected_rules
     return report
+
+
+def ingest_repository_conventions(
+    root_dir: Path | str = ".",
+    auto_promote: bool = True,
+) -> IngestionReport:
+    """Capture established team guidelines from existing prompt and convention files."""
+    return ingest_repository(
+        root_dir=root_dir,
+        auto_promote=auto_promote,
+        install_recommended_packs=False,
+    )
 
 
 def ingest_repository(

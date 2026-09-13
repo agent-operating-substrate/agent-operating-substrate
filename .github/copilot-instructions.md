@@ -190,9 +190,9 @@ GitHub Copilot Chat instructions: you must strictly obey these machine-enforced 
 ## Proactive Guardrail Memory: Recent Interceptions
 The following failure modes were recently intercepted by repository barriers.
 Ensure your implementation proactively avoids these exact patterns:
+* Intercepted [sec-no-secrets-001] in tests/test_developer_journey.py: Violation of 'sec-no-secrets-001': Hardcoded secret pattern detected on line 173.
+* Intercepted [gh-no-artifacts-credentials-002] in tests/test_developer_journey.py: Violation of 'gh-no-artifacts-credentials-002': Hardcoded secret pattern detected on line 173.
 * Intercepted [cand-promo-01]: Preserve explicit types in signatures.
 * Intercepted [py-async-no-blocking-io-003]: Asynchronous functions (async def) must not invoke synchronous blocking I/O calls such as time.sleep, synchronous requests, or blocking filesystem operations.
 * Intercepted [py-no-bare-except-002]: Catching Exception or bare except blocks must not silently suppress errors with pass; catch specific exception classes and log or re-raise errors.
-* Intercepted [py-structured-logging-001]: Application, service, and core library code must use structured logging frameworks rather than standard print statements.
-* Intercepted [py-no-wildcard-import-002]: Wildcard imports ('from module import *') are prohibited; all imported symbols must be explicitly named or imported via the module namespace.
 <!-- AOS_INVARIANTS_END -->
