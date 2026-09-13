@@ -145,3 +145,57 @@ def review_pr_diff(diff_content: str, root_dir: Path | str = ".") -> dict[str, A
         "comments_count": len(comments),
         "comments": comments,
     }
+
+
+DEFAULT_GITHUB_WORKFLOW = """name: AOS Guardrails
+
+on:
+  pull_request:
+    branches: [ master, main ]
+  push:
+    branches: [ master, main ]
+
+jobs:
+  verify-invariants:
+    name: Verify Substrate Invariants
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install AOS
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Verify Invariants
+        run: |
+          python -m aos ci run --auto-sync
+"""
+
+
+def install_ci_workflow(root_dir: Path | str = ".") -> Path:
+    """Install GitHub Actions workflow in .github/workflows/aos-guardrails.yml."""
+    root = Path(root_dir)
+    wf_dir = root / ".github" / "workflows"
+    wf_dir.mkdir(parents=True, exist_ok=True)
+    target = wf_dir / "aos-guardrails.yml"
+    target.write_text(DEFAULT_GITHUB_WORKFLOW, encoding="utf-8")
+    return target
+
+
+def uninstall_ci_workflow(root_dir: Path | str = ".") -> bool:
+    """Remove GitHub Actions workflow if installed."""
+    target = Path(root_dir) / ".github" / "workflows" / "aos-guardrails.yml"
+    if target.is_file():
+        target.unlink()
+        return True
+    return False
+
