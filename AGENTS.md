@@ -30,6 +30,10 @@ These rules apply to any autonomous agent working inside the Agent Operating Sub
 * Changes must be submitted via Pull Requests or Merge Requests to allow multiple parallel agents and human contributors to work concurrently without merge collisions.
 * Every PR must pass automated CI checks (pytest, invariant validation, documentation build) before merging.
 
+## 7. Release Title Contract
+* GitHub release titles must strictly contain only the version tag (e.g., `v0.2.0`).
+* Never append descriptive phrases, colons, or subtitles to release titles.
+
 <!-- AOS_INVARIANTS_START -->
 # Universal Agent Operating Guidelines (AOS Substrate)
 
@@ -77,6 +81,13 @@ Universal agent instructions: these machine-enforced repository invariants apply
 * Statement: Build artifacts, compiled binaries, bytecode (.pyc, .class), local environment configuration files (.env), and IDE directories must not be committed to version control.
 * Rationale: Committing build outputs and local environment files bloats repository history, triggers merge conflicts, and leaks local configuration secrets.
 * Paths: **/*
+* Max blast radius lines: 30
+
+### [gh-release-title-001] (Enforcement: reject_diff)
+* Statement: GitHub release titles must strictly contain only the version tag (e.g., ${{ github.ref_name }} or v0.2.0) without descriptive phrases or subtitles.
+* Rationale: Enforces clean, predictable release naming conventions across CI pipelines and release automation.
+* Paths: .github/workflows/*release*.yml, .github/workflows/*publish*.yml
+* Languages: yaml
 * Max blast radius lines: 30
 
 ### [go-context-propagation-002] (Enforcement: reject_diff)
