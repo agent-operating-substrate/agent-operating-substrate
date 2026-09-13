@@ -2584,111 +2584,9 @@ def _check_content_violations(
     if not matching_rules:
         return True, [], 0
 
-    violations: list[dict[str, Any]] = []
-    lines = content.splitlines() if content else []
-
-    for rule in matching_rules:
-        st_lower = rule.invariant.statement.lower()
-        rat_lower = rule.invariant.rationale.lower()
-        rule_text = f"{st_lower} {rat_lower}"
-
-        # 1. Em-dash and En-dash invariant detection
-        if "em dash" in rule_text or "zero em dashes" in rule_text:
-            dash_char = chr(8212)
-            en_dash_char = chr(8211)
-            for idx, line in enumerate(lines, start=1):
-                if dash_char in line or en_dash_char in line:
-                    violations.append({
-                        "rule_id": rule.id,
-                        "statement": rule.invariant.statement,
-                        "line_number": idx,
-                        "snippet": line.strip()[:100],
-                        "message": f"Violation of '{rule.id}': Forbidden dash punctuation detected on line {idx}.",
-                        "enforcement": rule.invariant.enforcement,
-                    })
-
-        # 2. Maximum blast radius / line limits
-        blast_limit = rule.invariant.max_blast_radius_lines
-        if blast_limit and blast_limit > 0 and len(lines) > blast_limit:
-            overflow_idx = blast_limit + 1
-            overflow_snippet = lines[blast_limit].strip()[:100] if len(lines) > blast_limit else ""
-            violations.append({
-                "rule_id": rule.id,
-                "statement": rule.invariant.statement,
-                "line_number": overflow_idx,
-                "snippet": overflow_snippet,
-                "message": f"Violation of '{rule.id}': Content exceeds maximum blast radius of {blast_limit} lines ({len(lines)} lines detected).",
-                "enforcement": rule.invariant.enforcement,
-            })
-
-        # 3. Secret leaks
-        if any(k in rule_text for k in ("secret", "api key", "password", "credential", "private key")):
-            secret_regexes = [
-                re.compile(r"""(?i)(api[_-]?key|secret|password|auth_token)\s*[:=]\s*["'][A-Za-z0-9_\-]{6,}["']"""),
-                re.compile(r"""ghp_[A-Za-z0-9]{30,}"""),
-                re.compile(r"""sk-[A-Za-z0-9]{20,}"""),
-                re.compile(r"""-----BEGIN (?:RSA |EC )?PRIVATE KEY-----"""),
-            ]
-            for idx, line in enumerate(lines, start=1):
-                for rx in secret_regexes:
-                    if rx.search(line):
-                        violations.append({
-                            "rule_id": rule.id,
-                            "statement": rule.invariant.statement,
-                            "line_number": idx,
-                            "snippet": line.strip()[:100],
-                            "message": f"Violation of '{rule.id}': Hardcoded secret pattern detected on line {idx}.",
-                            "enforcement": rule.invariant.enforcement,
-                        })
-                        break
-
-        # 4. SQL Injection
-        if "sql" in rule_text and any(k in rule_text for k in ("inject", "parameter", "interpolation", "bind variable")):
-            sql_regexes = [
-                re.compile(r"""(?:execute|cursor\.execute|raw_query)\s*\(\s*f["'].*SELECT""", re.IGNORECASE),
-                re.compile(r"""f["'].*SELECT\s+.*FROM.*\{""", re.IGNORECASE),
-                re.compile(r"""["'].*SELECT\s+.*FROM.*["']\s*[%+]""", re.IGNORECASE),
-            ]
-            for idx, line in enumerate(lines, start=1):
-                for rx in sql_regexes:
-                    if rx.search(line):
-                        violations.append({
-                            "rule_id": rule.id,
-                            "statement": rule.invariant.statement,
-                            "line_number": idx,
-                            "snippet": line.strip()[:100],
-                            "message": f"Violation of '{rule.id}': SQL query uses unparameterized string formatting on line {idx}.",
-                            "enforcement": rule.invariant.enforcement,
-                        })
-                        break
-
-        # 5. Wildcard imports
-        if "wildcard" in rule_text or "import *" in rule_text:
-            wc_regex = re.compile(r"""^\s*from\s+[\w\.]+\s+import\s+\*""")
-            for idx, line in enumerate(lines, start=1):
-                if wc_regex.search(line):
-                    violations.append({
-                        "rule_id": rule.id,
-                        "statement": rule.invariant.statement,
-                        "line_number": idx,
-                        "snippet": line.strip()[:100],
-                        "message": f"Violation of '{rule.id}': Prohibited wildcard import on line {idx}.",
-                        "enforcement": rule.invariant.enforcement,
-                    })
-
-        # 6. Print statement in clean code
-        if "no-print" in rule.id.lower() or ("print" in rule_text and ("structured log" in rule_text or "logging" in rule_text)):
-            print_regex = re.compile(r"""^\s*print\s*\(.*\)""")
-            for idx, line in enumerate(lines, start=1):
-                if print_regex.search(line):
-                    violations.append({
-                        "rule_id": rule.id,
-                        "statement": rule.invariant.statement,
-                        "line_number": idx,
-                        "snippet": line.strip()[:100],
-                        "message": f"Violation of '{rule.id}': Raw print call detected on line {idx}; structured logging required.",
-                        "enforcement": rule.invariant.enforcement,
-                    })
+    from aos.enforcer import check_content_violations
+    raw_violations = check_content_violations(file_path, content, matching_rules)
+    violations = [v.to_dict() for v in raw_violations]
 
     has_blocking = any(v.get("enforcement", "reject_diff") == "reject_diff" for v in violations)
     allowed = (len(violations) == 0) or not has_blocking
@@ -2783,6 +2681,36 @@ def _get_packs_data(root: Path) -> list[dict[str, Any]]:
     active_ids = {r.id for r in engine.get_rules(status="active")}
 
     pack_meta = {
+        "security-core": {
+            "title": "Security Core Guardrails",
+            "category": "SECURITY",
+            "description": "Essential non-negotiable security: blocks hardcoded secrets, SQL injection, SSRF, and unsafe deserialization.",
+        },
+        "python-core": {
+            "title": "Python Core Standards",
+            "category": "PYTHON",
+            "description": "Standard Python hygiene: bans wildcard imports, enforces structured logging, prevents bare except pass, and detects async blocking I/O.",
+        },
+        "typescript-core": {
+            "title": "TypeScript Core Standards",
+            "category": "TYPESCRIPT",
+            "description": "Strict TypeScript hygiene: prohibits explicit any, floating promises, React hook dependency issues, and dirty circular imports.",
+        },
+        "general-hygiene": {
+            "title": "General Repository Hygiene",
+            "category": "HYGIENE",
+            "description": "Universal repo health: manifest and lockfile sync, preventing build artifact commits, and surgical diff blast radius limits.",
+        },
+        "rust-core": {
+            "title": "Rust Core Standards",
+            "category": "RUST",
+            "description": "Idiomatic Rust invariants: mandatory // SAFETY: comments on unsafe blocks and banning unwrap in library code.",
+        },
+        "go-core": {
+            "title": "Go Core Standards",
+            "category": "GOLANG",
+            "description": "Idiomatic Go invariants: explicit error handling with %w wrapping and context.Context propagation.",
+        },
         "universal-security": {
             "title": "Universal Security Guardrails",
             "category": "SECURITY",
@@ -2822,11 +2750,6 @@ def _get_packs_data(root: Path) -> list[dict[str, Any]]:
             "title": "Python Clean Architecture",
             "category": "ARCHITECTURE",
             "description": "Linting constraints against direct print calls, wildcard imports, and architectural layer drift.",
-        },
-        "performance-simd": {
-            "title": "High-Performance SIMD Alignment",
-            "category": "PERFORMANCE",
-            "description": "Hardware-level memory alignment constraints for AVX2 and AVX-512 vector execution kernels.",
         },
     }
 
