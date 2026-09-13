@@ -381,14 +381,14 @@ def test_api_packs_list_and_install(test_server: str):
     assert isinstance(data, list)
     assert len(data) >= 3
     pack_names = [p["name"] for p in data]
-    assert "security-owasp" in pack_names
-    assert "python-clean-architecture" in pack_names
-    assert "performance-simd" in pack_names
+    assert "security-core" in pack_names
+    assert "python-core" in pack_names
+    assert "general-hygiene" in pack_names
 
     # Install security pack
     status, resp = http_post(
         f"{test_server}/api/packs/install",
-        {"pack_name": "security-owasp"},
+        {"pack_name": "security-core"},
     )
     assert status == 200
     assert resp["success"] is True
@@ -399,7 +399,7 @@ def test_api_packs_list_and_install(test_server: str):
     assert status == 200
     rule_ids = [r["id"] for r in rules]
     assert "sec-sql-injection-001" in rule_ids
-    assert "sec-secret-leak-002" in rule_ids
+    assert "sec-no-secrets-001" in rule_ids
 
     # Bad pack install
     status_bad, resp_bad = http_post(
