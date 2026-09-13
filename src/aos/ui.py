@@ -1015,6 +1015,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
           <input type="text" id="tester-path" class="inspector-input" style="width: 100%;" value="src/aos/sample.py" placeholder="e.g. src/aos/ui.py or lib/db.py">
         </div>
         <div style="padding-top: 18px; display: flex; gap: 8px; flex-wrap: wrap;">
+          <button type="button" class="btn btn-sm" onclick="setTesterSample('wildcard_print')">Test Wildcard &amp; Print</button>
+          <button type="button" class="btn btn-sm" onclick="setTesterSample('secret_leak')">Test Secret Leak</button>
           <button type="button" class="btn btn-sm" onclick="setTesterSample('em_dash')">Test Em-Dash Violation</button>
           <button type="button" class="btn btn-sm" onclick="setTesterSample('valid_python')">Test Valid Python Code</button>
         </div>
@@ -1026,6 +1028,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       </div>
 
       <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button type="button" id="btn-auto-fix" class="btn" style="display: none; border-color: #38bdf8; color: #38bdf8;" onclick="runAutoFixSnippet()">Auto-Fix Code</button>
         <button class="btn btn-primary" onclick="runContentTester()">Run Guardrail Check</button>
       </div>
 
@@ -1840,25 +1843,21 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     function setTesterSample(type) {
       const pathEl = document.getElementById('tester-path');
       const contentEl = document.getElementById('tester-content');
-      if (type === 'em_dash') {
+      if (type === 'wildcard_print') {
         pathEl.value = 'src/aos/sample.py';
-        contentEl.value = [
-          '# Critical logic with forbidden punctuation: ' + String.fromCharCode(8212) + ' causes rejection',
-          'def compute():',
-          '    return True',
-          ''
-        ].join(String.fromCharCode(10));
+        contentEl.value = ['from os import *', '', 'def run_process():', '    print("Starting process")', '    return True', ''].join(String.fromCharCode(10));
+        runContentTester();
+      } else if (type === 'secret_leak') {
+        pathEl.value = 'src/aos/sample.py';
+        contentEl.value = ['# Credential configuration', 'AWS_SECRET_ACCESS_KEY = "AKIAIOSFODNN7EXAMPLE"', ''].join(String.fromCharCode(10));
+        runContentTester();
+      } else if (type === 'em_dash') {
+        pathEl.value = 'src/aos/sample.py';
+        contentEl.value = ['# Logic with forbidden punctuation: ' + String.fromCharCode(8212) + ' causes rejection', 'def compute():', '    return True', ''].join(String.fromCharCode(10));
         runContentTester();
       } else if (type === 'valid_python') {
         pathEl.value = 'src/aos/sample.py';
-        contentEl.value = [
-          'def compute_metrics(values: list[float]) -> float:',
-          '    # Compute mean metrics cleanly without violations.',
-          '    if not values:',
-          '        return 0.0',
-          '    return sum(values) / len(values)',
-          ''
-        ].join(String.fromCharCode(10));
+        contentEl.value = ['def compute_metrics(values: list[float]) -> float:', '    if not values:', '        return 0.0', '    return sum(values) / len(values)', ''].join(String.fromCharCode(10));
         runContentTester();
       }
     }
@@ -1880,7 +1879,9 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         const violations = data.violations || [];
         const matchingCount = data.matching_rules_count || 0;
 
+        const autoFixBtn = document.getElementById('btn-auto-fix');
         if (allowed) {
+          if (autoFixBtn) autoFixBtn.style.display = 'none';
           verdictDiv.innerHTML = `
             <div class="verdict-banner verdict-allowed">
               <div class="verdict-header">
@@ -1893,6 +1894,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             </div>
           `;
         } else {
+          if (autoFixBtn) autoFixBtn.style.display = 'inline-block';
           const firstId = violations.length > 0 ? violations[0].rule_id : 'active-guardrail';
           verdictDiv.innerHTML = `
             <div class="verdict-banner verdict-blocked">
@@ -1924,6 +1926,34 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       } catch (err) {
         console.error(err);
         verdictDiv.innerHTML = '<div style="color: #f87171;">Failed to evaluate code content.</div>';
+      }
+    }
+
+    async function runAutoFixSnippet() {
+      const pathVal = (document.getElementById('tester-path').value || '').trim() || 'sample.py';
+      const contentEl = document.getElementById('tester-content');
+      const contentVal = contentEl.value || '';
+      try {
+        const res = await fetch('/api/fix-content', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ file_path: pathVal, content: contentVal }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          contentEl.value = data.fixed_content;
+          if (data.fixes_count > 0) {
+            showToast(`Remediated ${data.fixes_count} violation(s) deterministically.`, 'success');
+          } else {
+            showToast('No automated fixes available for these violations.', 'warning');
+          }
+          await runContentTester();
+        } else {
+          showToast(data.error || 'Auto-fix request failed.', 'error');
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Network error during auto-fix.', 'error');
       }
     }
 
@@ -2034,7 +2064,10 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                 <span style="font-size: 11px; color: ${isInstalled ? '#34d399' : 'var(--text-muted)'}; font-weight: 600;">
                   ${isInstalled ? '✓ Pack Installed' : 'Not installed'}
                 </span>
-                <button class="${btnClass}" onclick="installRulePack('${escapeHtml(p.name)}', this)">${btnText}</button>
+                <div style="display: flex; gap: 8px;">
+                  ${isInstalled ? `<button class="btn btn-sm" style="border-color: #ef4444; color: #f87171;" onclick="uninstallRulePack('${escapeHtml(p.name)}', this)">Uninstall</button>` : ''}
+                  <button class="${btnClass}" onclick="installRulePack('${escapeHtml(p.name)}', this)">${btnText}</button>
+                </div>
               </div>
             </div>
           `;
@@ -2065,6 +2098,32 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         }
       } catch (err) {
         showToast('Network error while installing pack', 'error');
+        if (btn) btn.innerText = orig;
+      }
+    }
+
+    async function uninstallRulePack(packName, btn) {
+      if (!confirm(`Are you sure you want to uninstall and archive all rules from '${packName}'?`)) return;
+      const orig = btn ? btn.innerText : '';
+      if (btn) btn.innerText = 'Uninstalling...';
+      try {
+        const res = await fetch('/api/packs/uninstall', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pack_name: packName })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          showToast(data.message || `Pack '${packName}' uninstalled!`, 'info');
+          await loadPacks();
+          await loadRules();
+          await loadOverview();
+        } else {
+          showToast(`Error: ${data.error || 'Failed to uninstall pack'}`, 'error');
+          if (btn) btn.innerText = orig;
+        }
+      } catch (err) {
+        showToast('Network error while uninstalling pack', 'error');
         if (btn) btn.innerText = orig;
       }
     }
@@ -2605,6 +2664,21 @@ def _check_content_payload(root: Path, payload: dict[str, Any]) -> tuple[int, di
     }
 
 
+def _fix_content_payload(root: Path, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+    file_path = str(payload.get("file_path") or payload.get("path") or "sample.py").strip()
+    content = str(payload.get("content") or "")
+    engine = RuleEngine(root_dir=root)
+    rules = engine.match_file(target_path=file_path, status="active")
+    from aos.enforcer import auto_fix_content
+    fixed_content, fixes_applied = auto_fix_content(file_path, content, rules)
+    return 200, {
+        "fixed_content": fixed_content,
+        "fixes_count": len(fixes_applied),
+        "fixes": fixes_applied,
+        "file_path": file_path,
+    }
+
+
 def _get_rule_yaml(root: Path, rule_id: str) -> tuple[int, dict[str, Any]]:
     sub_dir = _get_substrate_dir(root)
     for folder in ("active", "candidate", "archive"):
@@ -2805,6 +2879,40 @@ def _install_pack_payload(root: Path, payload: dict[str, Any]) -> tuple[int, dic
         return 500, {"error": f"Failed to install pack: {exc}"}
 
 
+def _uninstall_pack_payload(root: Path, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+    pack_name = str(payload.get("pack_name") or payload.get("name") or "").strip()
+    if not pack_name:
+        return 400, {"error": "Field 'pack_name' is required."}
+
+    if pack_name not in CURATED_PACKS:
+        return 400, {"error": f"Unknown pack '{pack_name}'. Available: {list(CURATED_PACKS.keys())}"}
+
+    try:
+        from aos.packs import uninstall_pack
+        uninstalled = uninstall_pack(pack_name=pack_name, root_dir=root, archive=True)
+        post_event(
+            {
+                "type": "PACK_UNINSTALLED",
+                "sender": "control-plane-ui",
+                "payload": {
+                    "pack_name": pack_name,
+                    "uninstalled_count": len(uninstalled),
+                    "uninstalled_paths": [str(p) for p in uninstalled],
+                },
+            },
+            root_dir=root,
+        )
+        return 200, {
+            "success": True,
+            "pack_name": pack_name,
+            "uninstalled_count": len(uninstalled),
+            "uninstalled_paths": [str(p) for p in uninstalled],
+            "message": f"Pack '{pack_name}' successfully uninstalled ({len(uninstalled)} rules archived).",
+        }
+    except Exception as exc:
+        return 500, {"error": f"Failed to uninstall pack: {exc}"}
+
+
 class DashboardRequestHandler(BaseHTTPRequestHandler):
     root_dir: Path = Path(".")
 
@@ -2889,8 +2997,14 @@ class DashboardRequestHandler(BaseHTTPRequestHandler):
         elif path == "/api/check-content":
             status_code, resp = _check_content_payload(self.root_dir, payload)
             self._send_json(resp, status_code=status_code)
+        elif path == "/api/fix-content":
+            status_code, resp = _fix_content_payload(self.root_dir, payload)
+            self._send_json(resp, status_code=status_code)
         elif path == "/api/packs/install":
             status_code, resp = _install_pack_payload(self.root_dir, payload)
+            self._send_json(resp, status_code=status_code)
+        elif path == "/api/packs/uninstall":
+            status_code, resp = _uninstall_pack_payload(self.root_dir, payload)
             self._send_json(resp, status_code=status_code)
         elif path == "/api/ingest/apply":
             from aos.ingest import ingest_repository
