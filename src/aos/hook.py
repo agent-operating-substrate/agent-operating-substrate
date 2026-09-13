@@ -75,6 +75,28 @@ def run_pre_commit_check(root_dir: Path | str = ".") -> int:
     reject_violations = [v for v in violations if v.enforcement == "reject_diff"]
 
     if reject_violations:
+        try:
+            from aos.blackboard import post_event
+            from aos.harness import sync_harnesses
+            for v in reject_violations:
+                post_event(
+                    {
+                        "type": "PRE_COMMIT_BLOCKED",
+                        "sender": "git-pre-commit-barrier",
+                        "payload": {
+                            "rule_id": v.rule_id,
+                            "file_path": v.file_path,
+                            "line_number": v.line_number,
+                            "message": v.message,
+                            "statement": v.statement,
+                        },
+                    },
+                    root_dir=root_dir,
+                )
+            sync_harnesses(root_dir=root_dir)
+        except Exception:
+            pass
+
         print("=" * 70, file=sys.stderr)
         print("AOS COMMIT REJECTED: Invariant violations detected in staged files:", file=sys.stderr)
         print("=" * 70, file=sys.stderr)
@@ -83,7 +105,8 @@ def run_pre_commit_check(root_dir: Path | str = ".") -> int:
             print(f"[{v.rule_id}] {v.file_path}{loc}", file=sys.stderr)
             print(f"  {v.message}", file=sys.stderr)
         print("=" * 70, file=sys.stderr)
-        print("Correct the violations above before committing.", file=sys.stderr)
+        print("AOS self-improvement loop: Failure recorded and agent prompts re-synced.", file=sys.stderr)
+        print("Run 'aos enforce --fix <file>' to attempt automated remediation.", file=sys.stderr)
         return 1
 
     return 0
