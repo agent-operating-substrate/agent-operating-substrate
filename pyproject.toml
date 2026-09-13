@@ -1,0 +1,60 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent-operating-substrate"
+version = "0.1.0"
+description = "Autonomous behavior firewall, stigmergic runtime, and permanent memory for Cursor, Copilot, and Claude Code"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "AOS Agent", email = "aos-agent-maintainer-a4d93332@uberip.com"}
+]
+keywords = [
+    "agents",
+    "guardrails",
+    "invariants",
+    "cursor",
+    "copilot",
+    "claude-code",
+    "pre-commit",
+    "stigmergy",
+    "mcp",
+    "code-quality"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Software Development :: Testing",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+requires-python = ">=3.11"
+dependencies = [
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-playwright>=0.5.0",
+    "playwright>=1.40.0",
+    "zensical>=0.0.30",
+]
+
+[project.urls]
+Homepage = "https://github.com/aos-agent/agent-operating-substrate"
+Documentation = "https://aos-agent.github.io/agent-operating-substrate/"
+Repository = "https://github.com/aos-agent/agent-operating-substrate.git"
+Issues = "https://github.com/aos-agent/agent-operating-substrate/issues"
+
+[project.scripts]
+aos = "aos.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

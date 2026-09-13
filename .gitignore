@@ -9,6 +9,7 @@ __pycache__/
 dist/
 build/
 bin/
+site/
 
 # OS & Editor
 .DS_Store
@@ -16,6 +17,8 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Local logs
+# Local logs & databases
 *.log
+*.db
+*.egg-info/
 .agents/blackboard/events.jsonl
